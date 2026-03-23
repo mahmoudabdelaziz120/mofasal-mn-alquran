@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { SURAHS, RECITERS, TAJWEED_RULES, numToArabic, ayaUrl } from "@/data/surahs";
 import CosmosBackground from "@/components/CosmosBackground";
-import { ArrowRight, Play, Pause, SkipBack, SkipForward, Repeat, Home } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Play, Pause, SkipBack, SkipForward, Repeat, Home } from "lucide-react";
 
 interface AyahData {
   num: number;
@@ -29,6 +30,12 @@ export default function SurahReader() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mushafRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<number | null>(null);
+  const isPlayingRef = useRef(false);
+
+  // Keep ref in sync
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   // Restore saved state
   useEffect(() => {
@@ -129,6 +136,17 @@ export default function SurahReader() {
     };
   }, []);
 
+  // Auto-reload when reciter changes during playback
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || ayahs.length === 0) return;
+    // Only reload if audio has been loaded before
+    if (audio.src && audio.src !== window.location.href) {
+      const wasPlaying = isPlayingRef.current;
+      loadAyaDirect(curIdx, wasPlaying, reciter);
+    }
+  }, [reciter]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fmt = (s: number) => {
     if (!s || isNaN(s)) return "0:00";
     const m = Math.floor(s / 60);
@@ -136,29 +154,33 @@ export default function SurahReader() {
     return `${m}:${ss < 10 ? "0" : ""}${ss}`;
   };
 
+  // Direct load with explicit reciter (avoids stale closure)
+  const loadAyaDirect = (idx: number, autoPlay: boolean, rec: string) => {
+    const audio = audioRef.current;
+    if (!audio || !ayahs[idx]) return;
+    clearTimeout(timeoutRef.current!);
+    setCurIdx(idx);
+    setProgress(0);
+    setCurTime("0:00");
+    setDurTime("0:00");
+    audio.src = ayaUrl(surahNum, ayahs[idx].num, rec);
+    audio.load();
+    if (autoPlay) {
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+      timeoutRef.current = window.setTimeout(() => {
+        if (!audio.duration && idx < ayahs.length - 1) {
+          loadAyaDirect(idx + 1, true, rec);
+        }
+      }, 6000);
+    }
+  };
+
   const loadAya = useCallback(
     (idx: number, autoPlay = false) => {
-      const audio = audioRef.current;
-      if (!audio || !ayahs[idx]) return;
-      clearTimeout(timeoutRef.current!);
-      setCurIdx(idx);
-      setProgress(0);
-      setCurTime("0:00");
-      setDurTime("0:00");
-      audio.src = ayaUrl(surahNum, ayahs[idx].num, reciter);
-      audio.load();
-      if (autoPlay) {
-        audio.play().catch(() => {});
-        setIsPlaying(true);
-        // Timeout
-        timeoutRef.current = window.setTimeout(() => {
-          if (!audio.duration && idx < ayahs.length - 1) {
-            loadAya(idx + 1, true);
-          }
-        }, 6000);
-      }
+      loadAyaDirect(idx, autoPlay, reciter);
     },
-    [ayahs, reciter, surahNum]
+    [ayahs, reciter, surahNum] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const togglePlay = () => {
@@ -256,23 +278,21 @@ export default function SurahReader() {
                   سورة {surah.name}
                 </h1>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <span
                   className="text-[0.6875rem] px-2.5 py-1 rounded-lg"
                   style={{ color: "var(--text-2)", background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}
                 >
                   {surah.revelationPlace === "makkah" ? "مكية" : "مدنية"} · {numToArabic(surah.versesCount)} آية
                 </span>
+                <ThemeToggle />
               </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[0.6875rem]" style={{ color: "var(--text-2)" }}>القارئ:</span>
               <select
                 value={reciter}
-                onChange={(e) => {
-                  setReciter(e.target.value);
-                  if (audioRef.current?.src) loadAya(curIdx, isPlaying);
-                }}
+                onChange={(e) => setReciter(e.target.value)}
                 className="text-xs px-3 py-1.5 rounded-lg outline-none cursor-pointer font-[system-ui]"
                 style={{
                   background: "var(--glass-card-bg)",
@@ -345,7 +365,7 @@ export default function SurahReader() {
               </span>
               <div
                 className="flex-1 h-1 rounded-full cursor-pointer relative"
-                style={{ background: "rgba(255,255,255,0.12)" }}
+                style={{ background: "var(--progress-bar-bg)" }}
                 onClick={handleSeek}
               >
                 <div
@@ -372,7 +392,7 @@ export default function SurahReader() {
                         ? "var(--dot-active)"
                         : i < curIdx
                         ? "var(--dot-done)"
-                        : "rgba(255,255,255,0.12)",
+                        : "var(--progress-bar-bg)",
                     boxShadow: i === curIdx ? "0 0 5px var(--dot-active)" : "none",
                   }}
                 />
@@ -384,7 +404,7 @@ export default function SurahReader() {
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Mushaf pane */}
-          <div ref={mushafRef} className="flex-[1.2] overflow-y-auto px-7 py-4 pb-10 custom-scrollbar" style={{ borderLeft: "0.5px solid rgba(255,255,255,0.07)" }}>
+          <div ref={mushafRef} className="flex-[1.2] overflow-y-auto px-7 py-4 pb-10 custom-scrollbar" style={{ borderLeft: "0.5px solid var(--glass-thin-border)" }}>
             {showBasmalah && (
               <div className="text-center font-quran text-xl mb-3.5 pb-3" style={{ color: "var(--text-1)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
@@ -411,8 +431,8 @@ export default function SurahReader() {
                     <span
                       className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[0.625rem] mx-[3px] align-middle"
                       style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "0.5px solid rgba(255,255,255,0.07)",
+                        background: "var(--ayah-num-bg)",
+                        border: "0.5px solid var(--ayah-num-border)",
                         color: "var(--text-3)",
                         fontFamily: "system-ui",
                       }}
@@ -428,7 +448,7 @@ export default function SurahReader() {
           {/* Rules pane */}
           <div
             className="hidden md:block w-[260px] flex-shrink-0 overflow-y-auto p-3.5 custom-scrollbar"
-            style={{ background: "rgba(0,0,0,0.2)" }}
+            style={{ background: "var(--rules-pane-bg)" }}
           >
             <div className="text-[0.625rem] uppercase tracking-widest mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
               أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
@@ -437,8 +457,8 @@ export default function SurahReader() {
               <div
                 className="font-quran text-sm leading-[2.1] mb-2.5 p-2.5 rounded-xl text-right"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "0.5px solid rgba(255,255,255,0.07)",
+                  background: "var(--ayah-num-bg)",
+                  border: "0.5px solid var(--ayah-num-border)",
                   color: "var(--text-0)",
                 }}
                 dangerouslySetInnerHTML={{ __html: ayahs[curIdx].tajweedHtml }}
@@ -454,8 +474,8 @@ export default function SurahReader() {
                   key={i}
                   className="flex items-start gap-2 p-2.5 rounded-xl mb-1.5"
                   style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "0.5px solid rgba(255,255,255,0.08)",
+                    background: "var(--ayah-num-bg)",
+                    border: "0.5px solid var(--ayah-num-border)",
                     animation: "fadeSlideUp 0.2s ease",
                   }}
                 >
@@ -472,7 +492,7 @@ export default function SurahReader() {
         {/* Legend strip */}
         <div
           className="flex-shrink-0 flex flex-wrap gap-1 items-center px-4 py-1.5"
-          style={{ background: "rgba(0,0,0,0.16)", borderTop: "0.5px solid var(--glass-thin-border)" }}
+          style={{ background: "var(--legend-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}
         >
           {Object.entries(TAJWEED_RULES)
             .filter(([, rule], i, arr) => {

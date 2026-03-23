@@ -136,22 +136,123 @@ export const RECITERS = [
 ];
 
 export const TAJWEED_RULES: Record<string, { label: string; color: string }> = {
-  ham_wasl: { label: "همزة الوصل", color: "#AAAAFF" },
-  laam_shamsiyah: { label: "لام شمسية", color: "#AAAAFF" },
-  madda_normal: { label: "مد طبيعي", color: "#537FFF" },
-  madda_permissible: { label: "مد جائز", color: "#4050FF" },
-  madda_necessary: { label: "مد لازم", color: "#000EBC" },
-  madda_obligatory: { label: "مد واجب", color: "#2144C1" },
-  ikhfa_shafawi: { label: "إخفاء شفوي", color: "#D500B7" },
-  ikhfa: { label: "إخفاء", color: "#9400A8" },
-  idgham_shafawi: { label: "إدغام شفوي", color: "#58B800" },
-  idgham_ghunnah: { label: "إدغام بغنة", color: "#169200" },
-  idgham_with_ghunnah: { label: "إدغام بغنة", color: "#169200" },
-  idgham_without_ghunnah: { label: "إدغام بغير غنة", color: "#169200" },
-  qalaqah: { label: "قلقلة", color: "#DD0008" },
-  ghunnah: { label: "غنة", color: "#FF7E1E" },
+  ham_wasl: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  laam_shamsiyah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  madda_normal: { label: "مدّ حركتان", color: "#B8860B" },
+  madda_permissible: { label: "مدّ جائز ٢-٤-٦ حركات", color: "#E8740C" },
+  madda_necessary: { label: "مدّ لازم ٦ حركات", color: "#900048" },
+  madda_obligatory: { label: "مدّ واجب ٤-٥ حركات", color: "#D6006E" },
+  ikhfa_shafawi: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
+  ikhfa: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
+  idgham_shafawi: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  idgham_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  idgham_with_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  idgham_without_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
+  qalaqah: { label: "قلقلة", color: "#4488EE" },
+  ghunnah: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
   iqlab: { label: "إقلاب", color: "#26BFFD" },
 };
+
+// Surah categories for the main page
+export interface SurahCategory {
+  id: string;
+  title: string;
+  desc: string;
+  surahIds: number[];
+  badgeText: string;
+  badgeColor: string;
+}
+
+export const SURAH_CATEGORIES: SurahCategory[] = [
+  {
+    id: "tiwal",
+    title: "السبع الطوال",
+    desc: "أطول سور القرآن — البقرة وآل عمران والنساء والمائدة والأنعام والأعراف والأنفال والتوبة",
+    surahIds: [2, 3, 4, 5, 6, 7, 8, 9],
+    badgeText: "٧ سور",
+    badgeColor: "#93c5fd",
+  },
+  {
+    id: "miuun",
+    title: "المئون",
+    desc: "السور التي تلي الطوال — تزيد آياتها على مائة أو تقاربها",
+    surahIds: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+    badgeText: "~٧ سور",
+    badgeColor: "#a78bfa",
+  },
+  {
+    id: "mathani",
+    title: "المثاني",
+    desc: "السور التي تلي المئون — دون المئة آية وفوق المفصل",
+    surahIds: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
+    badgeText: "سور متوسطة",
+    badgeColor: "#4ade80",
+  },
+  {
+    id: "mufassal_tiwal",
+    title: "طوال المفصل",
+    desc: "من سورة ق (٥٠) إلى سورة النبأ (٧٨)",
+    surahIds: Array.from({ length: 29 }, (_, i) => 50 + i),
+    badgeText: "٢٩ سورة",
+    badgeColor: "#fbbf24",
+  },
+  {
+    id: "mufassal_awsat",
+    title: "أوساط المفصل",
+    desc: "من سورة النبأ (٧٨) إلى سورة الضحى (٩٣)",
+    surahIds: Array.from({ length: 16 }, (_, i) => 78 + i),
+    badgeText: "١٦ سورة",
+    badgeColor: "#fb923c",
+  },
+  {
+    id: "mufassal_qisar",
+    title: "قصار المفصل",
+    desc: "من سورة الضحى (٩٣) إلى سورة الناس (١١٤)",
+    surahIds: Array.from({ length: 22 }, (_, i) => 93 + i),
+    badgeText: "٢٢ سورة",
+    badgeColor: "#f87171",
+  },
+];
+
+// Special groupings
+export const SPECIAL_CATEGORIES = [
+  {
+    id: "fatiha",
+    title: "الفاتحة",
+    desc: "أم الكتاب — فاتحة القرآن الكريم",
+    surahIds: [1],
+  },
+  {
+    id: "hawameem",
+    title: "الحواميم السبع",
+    desc: "سبع سور تبدأ بـ (حم) — من سورة غافر (٤٠) إلى سورة الأحقاف (٤٦)",
+    surahIds: [40, 41, 42, 43, 44, 45, 46],
+  },
+  {
+    id: "musabbihat",
+    title: "المسبّحات",
+    desc: "السور التي تبدأ بـ (سبّح أو يسبّح) — الإسراء، الحديد، الحشر، الصف، الجمعة، التغابن، الأعلى",
+    surahIds: [17, 57, 59, 61, 62, 64, 87],
+  },
+  {
+    id: "tawasin",
+    title: "الطواسين",
+    desc: "الشعراء، النمل، القصص — تبدأ كل منها بـ (طس أو طسم)",
+    surahIds: [26, 27, 28],
+  },
+  {
+    id: "muawwidhat",
+    title: "المعوذتان",
+    desc: "سورة الفلق وسورة الناس — يُقرَآن معاً للاستعاذة",
+    surahIds: [113, 114],
+  },
+  {
+    id: "zahrawaan",
+    title: "الزهراوان",
+    desc: "البقرة وآل عمران — لنورهما وضيائهما يوم القيامة",
+    surahIds: [2, 3],
+  },
+];
 
 export function numToArabic(n: number): string {
   return String(n).split('').map(d => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)] || d).join('');
