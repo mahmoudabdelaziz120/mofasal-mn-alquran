@@ -27,7 +27,7 @@
     --ring: 217 80% 72%;
     --radius: 0.75rem;
 
-    /* Cosmos tokens */
+    /* Cosmos tokens — Dark */
     --cosmos-bg: radial-gradient(ellipse at 25% 15%, #0a1628 0%, #060d1a 45%, #020810 72%, #000005 100%);
     --glass-thin-bg: rgba(255,255,255, 0.04);
     --glass-thin-border: rgba(255,255,255, 0.08);
@@ -49,6 +49,67 @@
 
     --neb1: #0d2547;
     --neb2: #1a0d3d;
+
+    --rules-pane-bg: rgba(0,0,0,0.2);
+    --ayah-num-bg: rgba(255,255,255,0.04);
+    --ayah-num-border: rgba(255,255,255,0.07);
+    --legend-bg: rgba(0,0,0,0.16);
+    --progress-bar-bg: rgba(255,255,255,0.12);
+    --category-badge-bg: rgba(147,197,253, 0.12);
+    --category-badge-color: #93c5fd;
+  }
+
+  /* Light — Warm Parchment */
+  [data-theme="light"] {
+    --background: 40 45% 90%;
+    --foreground: 40 50% 15%;
+    --card: 40 35% 88%;
+    --card-foreground: 40 50% 15%;
+    --popover: 40 35% 88%;
+    --popover-foreground: 40 50% 15%;
+    --primary: 40 65% 35%;
+    --primary-foreground: 40 30% 95%;
+    --secondary: 40 25% 82%;
+    --secondary-foreground: 40 40% 30%;
+    --muted: 40 25% 82%;
+    --muted-foreground: 40 20% 50%;
+    --accent: 40 25% 82%;
+    --accent-foreground: 40 40% 30%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 20% 75%;
+    --input: 40 20% 75%;
+    --ring: 40 65% 35%;
+
+    --cosmos-bg: linear-gradient(160deg, #F5E6C8 0%, #EDD9A3 50%, #E8D29A 100%);
+    --glass-thin-bg: rgba(128,101,23, 0.06);
+    --glass-thin-border: rgba(128,101,23, 0.12);
+    --glass-card-bg: rgba(128,101,23, 0.08);
+    --glass-card-border: rgba(128,101,23, 0.15);
+    --glass-thick-bg: rgba(245,230,200, 0.85);
+    --glass-thick-border: rgba(128,101,23, 0.20);
+
+    --text-0: rgba(80,60,10, 0.95);
+    --text-1: rgba(100,75,20, 0.78);
+    --text-2: rgba(128,101,23, 0.55);
+    --text-3: rgba(128,101,23, 0.35);
+
+    --highlight-bg: rgba(128,101,23, 0.12);
+    --highlight-border: rgba(128,101,23, 0.30);
+    --dot-active: #806517;
+    --dot-done: rgba(128,101,23, 0.35);
+    --progress-grad: linear-gradient(to right, #806517, #A08030);
+
+    --neb1: transparent;
+    --neb2: transparent;
+
+    --rules-pane-bg: rgba(128,101,23, 0.05);
+    --ayah-num-bg: rgba(128,101,23, 0.06);
+    --ayah-num-border: rgba(128,101,23, 0.12);
+    --legend-bg: rgba(128,101,23, 0.06);
+    --progress-bar-bg: rgba(128,101,23, 0.15);
+    --category-badge-bg: rgba(128,101,23, 0.10);
+    --category-badge-color: #806517;
   }
 }
 
@@ -88,20 +149,20 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Tajweed colors */
+/* Tajweed colors — based on standard mushaf color coding */
 tajweed { display: inline; }
-tajweed.ham_wasl { color: #AAAAFF; }
-tajweed.laam_shamsiyah { color: #AAAAFF; }
-tajweed.madda_normal { color: #537FFF; }
-tajweed.madda_permissible { color: #4050FF; }
-tajweed.madda_necessary { color: #000EBC; }
-tajweed.madda_obligatory { color: #2144C1; }
-tajweed.ikhfa_shafawi { color: #D500B7; }
-tajweed.ikhfa { color: #9400A8; }
-tajweed.idgham_shafawi { color: #58B800; }
-tajweed.idgham_ghunnah, tajweed.idgham_with_ghunnah, tajweed.idgham_without_ghunnah { color: #169200; }
-tajweed.qalaqah { color: #DD0008; }
-tajweed.ghunnah { color: #FF7E1E; }
+tajweed.ham_wasl { color: #888888; }
+tajweed.laam_shamsiyah { color: #888888; }
+tajweed.madda_normal { color: #B8860B; }
+tajweed.madda_permissible { color: #E8740C; }
+tajweed.madda_necessary { color: #900048; }
+tajweed.madda_obligatory { color: #D6006E; }
+tajweed.ikhfa_shafawi { color: #008B00; }
+tajweed.ikhfa { color: #008B00; }
+tajweed.idgham_shafawi { color: #888888; }
+tajweed.idgham_ghunnah, tajweed.idgham_with_ghunnah, tajweed.idgham_without_ghunnah { color: #888888; }
+tajweed.qalaqah { color: #4488EE; }
+tajweed.ghunnah { color: #008B00; }
 tajweed.iqlab { color: #26BFFD; }
 span.end { display: none; }
 
@@ -109,3 +170,6 @@ span.end { display: none; }
 .custom-scrollbar::-webkit-scrollbar { width: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 .custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
+
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(128,101,23,0.2); }
+[data-theme="light"] .custom-scrollbar { scrollbar-color: rgba(128,101,23,0.2) transparent; }
