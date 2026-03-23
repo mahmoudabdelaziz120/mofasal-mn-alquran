@@ -475,10 +475,8 @@ export default function SurahReader() {
           style={{ background: "rgba(0,0,0,0.16)", borderTop: "0.5px solid var(--glass-thin-border)" }}
         >
           {Object.entries(TAJWEED_RULES)
-            .filter((_, i, arr) => {
-              // Deduplicate by label
-              const labels = arr.map(([, v]) => v[1].label);
-              return labels.indexOf(arr[i][1].label) === i;
+            .filter(([, rule], i, arr) => {
+              return arr.findIndex(([, r]) => r.label === rule.label) === i;
             })
             .map(([key, rule]) => (
               <span
