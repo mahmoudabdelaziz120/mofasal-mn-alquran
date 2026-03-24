@@ -1,14 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { SURAHS, RECITERS, TAJWEED_RULES, numToArabic, ayaUrl } from "@/data/surahs";
+import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl } from "@/data/surahs";
+import { parseTajweedText, extractTajweedCodes } from "@/lib/tajweedParser";
 import CosmosBackground from "@/components/CosmosBackground";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Play, Pause, SkipBack, SkipForward, Repeat, Home } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Repeat, Home, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 interface AyahData {
   num: number;
-  text: string;
-  tajweedHtml: string;
+  text: string; // raw bracket-format tajweed text
+}
+
+function useIsDarkMode() {
+  const [dark, setDark] = useState(() => {
+    return document.documentElement.getAttribute("data-theme") !== "light";
+  });
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      setDark(document.documentElement.getAttribute("data-theme") !== "light");
+    });
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
 }
 
 export default function SurahReader() {
@@ -16,6 +30,7 @@ export default function SurahReader() {
   const navigate = useNavigate();
   const surahNum = parseInt(id || "1");
   const surah = SURAHS.find((s) => s.id === surahNum);
+  const isDark = useIsDarkMode();
 
   const [ayahs, setAyahs] = useState<AyahData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,16 +41,14 @@ export default function SurahReader() {
   const [progress, setProgress] = useState(0);
   const [curTime, setCurTime] = useState("0:00");
   const [durTime, setDurTime] = useState("0:00");
+  const [showRules, setShowRules] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mushafRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<number | null>(null);
   const isPlayingRef = useRef(false);
 
-  // Keep ref in sync
-  useEffect(() => {
-    isPlayingRef.current = isPlaying;
-  }, [isPlaying]);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
 
   // Restore saved state
   useEffect(() => {
@@ -56,42 +69,28 @@ export default function SurahReader() {
     } catch {}
   }, [curIdx, reciter, surahNum]);
 
-  // Fetch ayahs
+  // Fetch ayahs from AlQuran.cloud tajweed API
   useEffect(() => {
     setLoading(true);
     setAyahs([]);
     setCurIdx(0);
-    
     const ctrl = new AbortController();
-    fetch(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahNum}?per_page=300&fields=text_uthmani_tajweed,text_uthmani`,
-      { signal: ctrl.signal }
-    )
+    fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-tajweed`, { signal: ctrl.signal })
       .then((r) => r.json())
       .then((d) => {
-        if (d.verses) {
-          setAyahs(
-            d.verses.map((v: any) => ({
-              num: v.verse_number,
-              text: v.text_uthmani,
-              tajweedHtml: v.text_uthmani_tajweed || v.text_uthmani,
-            }))
-          );
+        if (d.data?.ayahs) {
+          setAyahs(d.data.ayahs.map((a: any) => ({ num: a.numberInSurah, text: a.text })));
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-
     return () => ctrl.abort();
   }, [surahNum]);
 
   // Audio setup
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
+    if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
-
     const onTimeUpdate = () => {
       if (audio.duration) {
         setProgress((audio.currentTime / audio.duration) * 100);
@@ -100,47 +99,31 @@ export default function SurahReader() {
     };
     const onDurationChange = () => setDurTime(fmt(audio.duration));
     const onEnded = () => {
-      if (repeatMode) {
-        audio.play().catch(() => {});
-      } else if (curIdx < ayahs.length - 1) {
-        loadAya(curIdx + 1, true);
-      } else {
-        setIsPlaying(false);
-      }
+      if (repeatMode) { audio.play().catch(() => {}); }
+      else if (curIdx < ayahs.length - 1) loadAya(curIdx + 1, true);
+      else setIsPlaying(false);
     };
-    const onError = () => {
-      clearTimeout(timeoutRef.current!);
-      setIsPlaying(false);
-    };
-
+    const onError = () => { clearTimeout(timeoutRef.current!); setIsPlaying(false); };
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("durationchange", onDurationChange);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
-
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("durationchange", onDurationChange);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [curIdx, ayahs.length, repeatMode]);
+  }, [curIdx, ayahs.length, repeatMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cleanup audio on unmount
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
-    };
+    return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, []);
 
   // Auto-reload when reciter changes during playback
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || ayahs.length === 0) return;
-    // Only reload if audio has been loaded before
     if (audio.src && audio.src !== window.location.href) {
       const wasPlaying = isPlayingRef.current;
       loadAyaDirect(curIdx, wasPlaying, reciter);
@@ -154,7 +137,6 @@ export default function SurahReader() {
     return `${m}:${ss < 10 ? "0" : ""}${ss}`;
   };
 
-  // Direct load with explicit reciter (avoids stale closure)
   const loadAyaDirect = (idx: number, autoPlay: boolean, rec: string) => {
     const audio = audioRef.current;
     if (!audio || !ayahs[idx]) return;
@@ -169,17 +151,13 @@ export default function SurahReader() {
       audio.play().catch(() => {});
       setIsPlaying(true);
       timeoutRef.current = window.setTimeout(() => {
-        if (!audio.duration && idx < ayahs.length - 1) {
-          loadAyaDirect(idx + 1, true, rec);
-        }
+        if (!audio.duration && idx < ayahs.length - 1) loadAyaDirect(idx + 1, true, rec);
       }, 6000);
     }
   };
 
   const loadAya = useCallback(
-    (idx: number, autoPlay = false) => {
-      loadAyaDirect(idx, autoPlay, reciter);
-    },
+    (idx: number, autoPlay = false) => { loadAyaDirect(idx, autoPlay, reciter); },
     [ayahs, reciter, surahNum] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -187,10 +165,7 @@ export default function SurahReader() {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      if (!audio.src || audio.src === window.location.href) {
-        loadAya(curIdx, true);
-        return;
-      }
+      if (!audio.src || audio.src === window.location.href) { loadAya(curIdx, true); return; }
       audio.play().catch(() => {});
       setIsPlaying(true);
     } else {
@@ -220,30 +195,19 @@ export default function SurahReader() {
     }
   }, [curIdx]);
 
-  // Extract tajweed rules from current ayah
-  const currentRules = (() => {
+  // Extract tajweed codes from current ayah
+  const currentCodes = useMemo(() => {
     if (!ayahs[curIdx]) return [];
-    const html = ayahs[curIdx].tajweedHtml;
-    const matches = html.matchAll(/class=['"]([\w_]+)['"]/g);
-    const seen = new Set<string>();
-    const rules: { cls: string; label: string; color: string }[] = [];
-    for (const m of matches) {
-      const cls = m[1];
-      if (!seen.has(cls) && TAJWEED_RULES[cls]) {
-        seen.add(cls);
-        rules.push({ cls, ...TAJWEED_RULES[cls] });
-      }
-    }
-    return rules;
-  })();
+    return extractTajweedCodes(ayahs[curIdx].text);
+  }, [ayahs, curIdx]);
+
+  const colors = isDark ? TAJWEED_COLORS_DARK : TAJWEED_COLORS_LIGHT;
 
   if (!surah) {
     return (
       <div className="min-h-screen flex items-center justify-center" dir="rtl">
         <CosmosBackground />
-        <p className="relative z-10 font-quran text-lg" style={{ color: "var(--text-1)" }}>
-          السورة غير موجودة
-        </p>
+        <p className="relative z-10 font-quran text-lg" style={{ color: "var(--text-1)" }}>السورة غير موجودة</p>
       </div>
     );
   }
@@ -251,151 +215,80 @@ export default function SurahReader() {
   const showBasmalah = surahNum !== 1 && surahNum !== 9;
 
   return (
-    <div className="relative h-screen flex flex-col" dir="rtl">
+    <div className="relative h-[100dvh] flex flex-col" dir="rtl">
       <CosmosBackground />
-
       <div className="relative z-10 flex flex-col h-full">
         {/* Header */}
-        <div
-          className="flex-shrink-0"
-          style={{
-            background: "var(--glass-thin-bg)",
-            backdropFilter: "blur(20px)",
-            borderBottom: "0.5px solid var(--glass-thin-border)",
-          }}
-        >
-          <div className="px-4 py-2.5">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => navigate("/")}
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
-                  style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}
-                >
-                  <Home className="w-4 h-4" style={{ color: "var(--text-1)" }} />
+        <div className="flex-shrink-0" style={{ background: "var(--glass-thin-bg)", backdropFilter: "blur(20px)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
+          <div className="px-3 sm:px-4 py-2 sm:py-2.5">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button onClick={() => navigate("/")} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
+                  <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: "var(--text-1)" }} />
                 </button>
-                <h1 className="font-quran text-lg font-bold" style={{ color: "var(--text-0)" }}>
+                <h1 className="font-quran text-base sm:text-lg font-bold" style={{ color: "var(--text-0)" }}>
                   سورة {surah.name}
                 </h1>
               </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[0.6875rem] px-2.5 py-1 rounded-lg"
-                  style={{ color: "var(--text-2)", background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}
-                >
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="hidden sm:inline text-[0.6875rem] px-2.5 py-1 rounded-lg" style={{ color: "var(--text-2)", background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
                   {surah.revelationPlace === "makkah" ? "مكية" : "مدنية"} · {numToArabic(surah.versesCount)} آية
                 </span>
+                {/* Toggle rules panel on mobile */}
+                <button onClick={() => setShowRules(!showRules)} className="md:hidden w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
+                  {showRules ? <PanelRightClose className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} /> : <PanelRightOpen className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} />}
+                </button>
                 <ThemeToggle />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[0.6875rem]" style={{ color: "var(--text-2)" }}>القارئ:</span>
+              <span className="text-[0.625rem] sm:text-[0.6875rem]" style={{ color: "var(--text-2)" }}>القارئ:</span>
               <select
                 value={reciter}
                 onChange={(e) => setReciter(e.target.value)}
-                className="text-xs px-3 py-1.5 rounded-lg outline-none cursor-pointer font-[system-ui]"
-                style={{
-                  background: "var(--glass-card-bg)",
-                  border: "0.5px solid var(--glass-thin-border)",
-                  color: "var(--text-0)",
-                }}
+                className="text-[0.6875rem] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg outline-none cursor-pointer font-[system-ui]"
+                style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-thin-border)", color: "var(--text-0)" }}
               >
                 {RECITERS.map((r) => (
-                  <option key={r.id} value={r.id} style={{ background: "#0a1628", color: "var(--text-0)" }}>
-                    {r.name}
-                  </option>
+                  <option key={r.id} value={r.id} style={{ background: "#0a1628", color: "var(--text-0)" }}>{r.name}</option>
                 ))}
               </select>
             </div>
           </div>
 
           {/* Player bar */}
-          <div
-            className="px-4 py-2.5"
-            style={{
-              background: "var(--glass-thin-bg)",
-              borderTop: "0.5px solid var(--glass-thin-border)",
-            }}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex-1 font-quran text-[0.8125rem] truncate" style={{ color: "var(--text-2)" }}>
-                {ayahs[curIdx]
-                  ? `الآية ${numToArabic(ayahs[curIdx].num)} — ${ayahs[curIdx].text.substring(0, 50)}…`
-                  : "اضغط ▶ للبدء"}
+          <div className="px-3 sm:px-4 py-2 sm:py-2.5" style={{ background: "var(--glass-thin-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}>
+            <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
+              <div className="flex-1 font-quran text-[0.6875rem] sm:text-[0.8125rem] truncate" style={{ color: "var(--text-2)" }}>
+                {ayahs[curIdx] ? `الآية ${numToArabic(ayahs[curIdx].num)}` : "اضغط ▶ للبدء"}
               </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => curIdx > 0 && loadAya(curIdx - 1, isPlaying)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}
-                >
-                  <SkipForward className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <button onClick={() => curIdx > 0 && loadAya(curIdx - 1, isPlaying)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}>
+                  <SkipForward className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
-                <button
-                  onClick={togglePlay}
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--highlight-bg)", border: "0.5px solid var(--highlight-border)", color: "var(--dot-active)" }}
-                >
-                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                <button onClick={togglePlay} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center" style={{ background: "var(--highlight-bg)", border: "0.5px solid var(--highlight-border)", color: "var(--dot-active)" }}>
+                  {isPlaying ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-0.5" />}
                 </button>
-                <button
-                  onClick={() => curIdx < ayahs.length - 1 && loadAya(curIdx + 1, isPlaying)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}
-                >
-                  <SkipBack className="w-3.5 h-3.5" />
+                <button onClick={() => curIdx < ayahs.length - 1 && loadAya(curIdx + 1, isPlaying)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}>
+                  <SkipBack className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
-                <button
-                  onClick={() => setRepeatMode(!repeatMode)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{
-                    background: repeatMode ? "var(--highlight-bg)" : "var(--glass-card-bg)",
-                    border: `0.5px solid ${repeatMode ? "var(--highlight-border)" : "var(--glass-card-border)"}`,
-                    color: repeatMode ? "var(--dot-active)" : "var(--text-1)",
-                  }}
-                >
-                  <Repeat className="w-3.5 h-3.5" />
+                <button onClick={() => setRepeatMode(!repeatMode)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: repeatMode ? "var(--highlight-bg)" : "var(--glass-card-bg)", border: `0.5px solid ${repeatMode ? "var(--highlight-border)" : "var(--glass-card-border)"}`, color: repeatMode ? "var(--dot-active)" : "var(--text-1)" }}>
+                  <Repeat className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
               </div>
             </div>
             {/* Progress */}
             <div className="flex items-center gap-2" dir="ltr">
-              <span className="text-[0.625rem] min-w-[30px] text-center tabular-nums" style={{ color: "var(--text-3)" }}>
-                {curTime}
-              </span>
-              <div
-                className="flex-1 h-1 rounded-full cursor-pointer relative"
-                style={{ background: "var(--progress-bar-bg)" }}
-                onClick={handleSeek}
-              >
-                <div
-                  className="h-full rounded-full pointer-events-none"
-                  style={{ background: "var(--progress-grad)", width: `${progress}%` }}
-                />
+              <span className="text-[0.5625rem] sm:text-[0.625rem] min-w-[28px] text-center tabular-nums" style={{ color: "var(--text-3)" }}>{curTime}</span>
+              <div className="flex-1 h-1 rounded-full cursor-pointer relative" style={{ background: "var(--progress-bar-bg)" }} onClick={handleSeek}>
+                <div className="h-full rounded-full pointer-events-none" style={{ background: "var(--progress-grad)", width: `${progress}%` }} />
               </div>
-              <span className="text-[0.625rem] min-w-[30px] text-center tabular-nums" style={{ color: "var(--text-3)" }}>
-                {durTime}
-              </span>
+              <span className="text-[0.5625rem] sm:text-[0.625rem] min-w-[28px] text-center tabular-nums" style={{ color: "var(--text-3)" }}>{durTime}</span>
             </div>
             {/* Ayah dots */}
-            <div className="flex gap-[3px] flex-wrap mt-2" dir="ltr">
+            <div className="flex gap-[2px] sm:gap-[3px] flex-wrap mt-1.5 sm:mt-2" dir="ltr">
               {ayahs.map((_, i) => (
-                <div
-                  key={i}
-                  onClick={() => loadAya(i, true)}
-                  className="h-[3px] rounded-sm cursor-pointer flex-1 transition-all duration-200"
-                  style={{
-                    minWidth: 6,
-                    maxWidth: 16,
-                    background:
-                      i === curIdx
-                        ? "var(--dot-active)"
-                        : i < curIdx
-                        ? "var(--dot-done)"
-                        : "var(--progress-bar-bg)",
-                    boxShadow: i === curIdx ? "0 0 5px var(--dot-active)" : "none",
-                  }}
-                />
+                <div key={i} onClick={() => loadAya(i, true)} className="h-[2.5px] sm:h-[3px] rounded-sm cursor-pointer flex-1 transition-all duration-200" style={{ minWidth: 4, maxWidth: 14, background: i === curIdx ? "var(--dot-active)" : i < curIdx ? "var(--dot-done)" : "var(--progress-bar-bg)", boxShadow: i === curIdx ? "0 0 5px var(--dot-active)" : "none" }} />
               ))}
             </div>
           </div>
@@ -404,18 +297,16 @@ export default function SurahReader() {
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Mushaf pane */}
-          <div ref={mushafRef} className="flex-[1.2] overflow-y-auto px-7 py-4 pb-10 custom-scrollbar" style={{ borderLeft: "0.5px solid var(--glass-thin-border)" }}>
+          <div ref={mushafRef} className="flex-1 overflow-y-auto px-4 sm:px-7 py-3 sm:py-4 pb-8 sm:pb-10 custom-scrollbar" style={{ borderLeft: showRules ? "0.5px solid var(--glass-thin-border)" : "none" }}>
             {showBasmalah && (
-              <div className="text-center font-quran text-xl mb-3.5 pb-3" style={{ color: "var(--text-1)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
+              <div className="text-center font-quran text-lg sm:text-xl mb-3 sm:mb-3.5 pb-2 sm:pb-3" style={{ color: "var(--text-1)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
               </div>
             )}
             {loading ? (
-              <p className="text-center py-10 font-quran" style={{ color: "var(--text-2)" }}>
-                جاري تحميل الآيات...
-              </p>
+              <p className="text-center py-10 font-quran" style={{ color: "var(--text-2)" }}>جاري تحميل الآيات...</p>
             ) : (
-              <div className="font-quran text-[1.375rem] leading-[2.9] text-justify" style={{ color: "var(--text-0)" }}>
+              <div className="font-quran text-lg sm:text-xl md:text-[1.375rem] leading-[2.5] sm:leading-[2.7] md:leading-[2.9] text-justify" style={{ color: "var(--text-0)" }}>
                 {ayahs.map((aya, i) => (
                   <span
                     key={i}
@@ -427,9 +318,9 @@ export default function SurahReader() {
                       boxShadow: i === curIdx ? "0 0 0 1.5px var(--highlight-border)" : "none",
                     }}
                   >
-                    <span dangerouslySetInnerHTML={{ __html: aya.tajweedHtml }} />
+                    {parseTajweedText(aya.text, isDark)}
                     <span
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[0.625rem] mx-[3px] align-middle"
+                      className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[0.5rem] sm:text-[0.625rem] mx-[2px] sm:mx-[3px] align-middle"
                       style={{
                         background: "var(--ayah-num-bg)",
                         border: "0.5px solid var(--ayah-num-border)",
@@ -445,70 +336,39 @@ export default function SurahReader() {
             )}
           </div>
 
-          {/* Rules pane */}
-          <div
-            className="hidden md:block w-[260px] flex-shrink-0 overflow-y-auto p-3.5 custom-scrollbar"
-            style={{ background: "var(--rules-pane-bg)" }}
-          >
-            <div className="text-[0.625rem] uppercase tracking-widest mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
-              أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
-            </div>
-            {ayahs[curIdx] && (
-              <div
-                className="font-quran text-sm leading-[2.1] mb-2.5 p-2.5 rounded-xl text-right"
-                style={{
-                  background: "var(--ayah-num-bg)",
-                  border: "0.5px solid var(--ayah-num-border)",
-                  color: "var(--text-0)",
-                }}
-                dangerouslySetInnerHTML={{ __html: ayahs[curIdx].tajweedHtml }}
-              />
-            )}
-            {currentRules.length === 0 ? (
-              <p className="text-xs text-center py-5 font-quran" style={{ color: "var(--text-3)" }}>
-                لا توجد أحكام خاصة
-              </p>
-            ) : (
-              currentRules.map((rule, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 p-2.5 rounded-xl mb-1.5"
-                  style={{
-                    background: "var(--ayah-num-bg)",
-                    border: "0.5px solid var(--ayah-num-border)",
-                    animation: "fadeSlideUp 0.2s ease",
-                  }}
-                >
-                  <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: rule.color }} />
-                  <div className="text-xs font-medium" style={{ color: rule.color }}>
-                    {rule.label}
+          {/* Rules pane — hidden on mobile unless toggled */}
+          {showRules && (
+            <div className="w-[180px] sm:w-[220px] md:w-[260px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar" style={{ background: "var(--rules-pane-bg)" }}>
+              <div className="text-[0.5625rem] sm:text-[0.625rem] uppercase tracking-widest mb-2 sm:mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
+                أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
+              </div>
+              {currentCodes.length === 0 ? (
+                <p className="text-[0.6875rem] text-center py-5 font-quran" style={{ color: "var(--text-3)" }}>لا توجد أحكام خاصة</p>
+              ) : (
+                currentCodes.map((code) => (
+                  <div
+                    key={code}
+                    className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl mb-1.5"
+                    style={{ background: "var(--ayah-num-bg)", border: "0.5px solid var(--ayah-num-border)", animation: "fadeSlideUp 0.2s ease" }}
+                  >
+                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: colors[code] || "#888" }} />
+                    <div className="text-[0.6875rem] sm:text-xs font-medium" style={{ color: colors[code] || "#888" }}>
+                      {TAJWEED_RULE_LABELS[code] || code}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Legend strip */}
-        <div
-          className="flex-shrink-0 flex flex-wrap gap-1 items-center px-4 py-1.5"
-          style={{ background: "var(--legend-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}
-        >
-          {Object.entries(TAJWEED_RULES)
-            .filter(([, rule], i, arr) => {
-              return arr.findIndex(([, r]) => r.label === rule.label) === i;
-            })
-            .map(([key, rule]) => (
-              <span
-                key={key}
-                className="text-[0.625rem] px-2 py-0.5 rounded-md font-medium whitespace-nowrap"
-                style={{
-                  background: `${rule.color}22`,
-                  color: rule.color,
-                  border: `0.5px solid ${rule.color}44`,
-                }}
-              >
-                {rule.label}
+        <div className="flex-shrink-0 flex flex-wrap gap-1 items-center px-3 sm:px-4 py-1 sm:py-1.5" style={{ background: "var(--legend-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}>
+          {Object.entries(TAJWEED_RULE_LABELS)
+            .filter(([code]) => !["s", "d", "b"].includes(code)) // skip duplicates of gray group
+            .map(([code, label]) => (
+              <span key={code} className="text-[0.5rem] sm:text-[0.625rem] px-1.5 sm:px-2 py-0.5 rounded-md font-medium whitespace-nowrap" style={{ background: `${colors[code]}22`, color: colors[code], border: `0.5px solid ${colors[code]}44` }}>
+                {label}
               </span>
             ))}
         </div>

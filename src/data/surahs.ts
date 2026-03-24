@@ -135,25 +135,71 @@ export const RECITERS = [
   { id: "Yasser_Ad-Dussary_128kbps", name: "ياسر الدوسري" },
 ];
 
-export const TAJWEED_RULES: Record<string, { label: string; color: string }> = {
-  ham_wasl: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  laam_shamsiyah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  madda_normal: { label: "مدّ حركتان", color: "#B8860B" },
-  madda_permissible: { label: "مدّ جائز ٢-٤-٦ حركات", color: "#E8740C" },
-  madda_necessary: { label: "مدّ لازم ٦ حركات", color: "#900048" },
-  madda_obligatory: { label: "مدّ واجب ٤-٥ حركات", color: "#D6006E" },
-  ikhfa_shafawi: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
-  ikhfa: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
-  idgham_shafawi: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  idgham_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  idgham_with_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  idgham_without_ghunnah: { label: "إدغام ومالا يُلفظ", color: "#888888" },
-  qalaqah: { label: "قلقلة", color: "#4488EE" },
-  ghunnah: { label: "إخفاء ومواقع الغنة", color: "#008B00" },
-  iqlab: { label: "إقلاب", color: "#26BFFD" },
+// Tajweed code-to-color mapping from AlQuran.cloud bracket format
+// Dark mode colors
+export const TAJWEED_COLORS_DARK: Record<string, string> = {
+  h: "#AAAAAA", // Hamzat Wasl
+  s: "#AAAAAA", // Silent
+  l: "#AAAAAA", // Lam Shamsiyyah
+  n: "#537FFF", // Normal Prolongation
+  p: "#4050FF", // Permissible Prolongation
+  m: "#000EBC", // Necessary Prolongation 6 vowels
+  q: "#DD0008", // Qalqalah
+  o: "#2144C1", // Obligatory Prolongation
+  c: "#D500B7", // Ikhfa Shafawi
+  f: "#9400A8", // Ikhfa
+  w: "#58B800", // Idgham Shafawi
+  i: "#26BFFD", // Iqlab
+  a: "#169777", // Idgham With Ghunnah
+  u: "#169200", // Idgham Without Ghunnah
+  g: "#FF7E1E", // Ghunnah
+  d: "#AAAAAA", // Idgham Mutajanisayn
+  b: "#AAAAAA", // Idgham Mutaqaribayn
 };
 
-// Surah categories for the main page
+// Light mode colors — higher contrast on white
+export const TAJWEED_COLORS_LIGHT: Record<string, string> = {
+  h: "#9CA3AF",
+  s: "#9CA3AF",
+  l: "#9CA3AF",
+  n: "#2563EB",
+  p: "#1D4ED8",
+  m: "#1E3A8A",
+  q: "#DC2626",
+  o: "#1E40AF",
+  c: "#C026D3",
+  f: "#9333EA",
+  w: "#16A34A",
+  i: "#0284C7",
+  a: "#059669",
+  u: "#4D7C0F",
+  g: "#EA580C",
+  d: "#9CA3AF",
+  b: "#9CA3AF",
+};
+
+// Tajweed rule labels for the legend/rules panel
+export const TAJWEED_RULE_LABELS: Record<string, string> = {
+  h: "همزة الوصل",
+  s: "حرف ساكن (لا يُلفظ)",
+  l: "لام شمسية",
+  n: "مدّ طبيعي (حركتان)",
+  p: "مدّ جائز (٢-٤-٦)",
+  m: "مدّ لازم (٦ حركات)",
+  q: "قلقلة",
+  o: "مدّ واجب (٤-٥ حركات)",
+  c: "إخفاء شفوي",
+  f: "إخفاء",
+  w: "إدغام شفوي",
+  i: "إقلاب",
+  a: "إدغام بغنة",
+  u: "إدغام بغير غنة",
+  g: "غنة",
+  d: "إدغام متجانسين",
+  b: "إدغام متقاربين",
+};
+
+// Surah categories
 export interface SurahCategory {
   id: string;
   title: string;
@@ -167,7 +213,7 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "tiwal",
     title: "السبع الطوال",
-    desc: "أطول سور القرآن — البقرة وآل عمران والنساء والمائدة والأنعام والأعراف والأنفال والتوبة",
+    desc: "أطول سور القرآن",
     surahIds: [2, 3, 4, 5, 6, 7, 8, 9],
     badgeText: "٧ سور",
     badgeColor: "#93c5fd",
@@ -175,7 +221,7 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "miuun",
     title: "المئون",
-    desc: "السور التي تلي الطوال — تزيد آياتها على مائة أو تقاربها",
+    desc: "تزيد آياتها على مائة أو تقاربها",
     surahIds: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
     badgeText: "~٧ سور",
     badgeColor: "#a78bfa",
@@ -183,7 +229,7 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "mathani",
     title: "المثاني",
-    desc: "السور التي تلي المئون — دون المئة آية وفوق المفصل",
+    desc: "دون المئة آية وفوق المفصل",
     surahIds: [23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49],
     badgeText: "سور متوسطة",
     badgeColor: "#4ade80",
@@ -191,7 +237,7 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "mufassal_tiwal",
     title: "طوال المفصل",
-    desc: "من سورة ق (٥٠) إلى سورة النبأ (٧٨)",
+    desc: "من ق إلى النبأ",
     surahIds: Array.from({ length: 29 }, (_, i) => 50 + i),
     badgeText: "٢٩ سورة",
     badgeColor: "#fbbf24",
@@ -199,7 +245,7 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "mufassal_awsat",
     title: "أوساط المفصل",
-    desc: "من سورة النبأ (٧٨) إلى سورة الضحى (٩٣)",
+    desc: "من النبأ إلى الضحى",
     surahIds: Array.from({ length: 16 }, (_, i) => 78 + i),
     badgeText: "١٦ سورة",
     badgeColor: "#fb923c",
@@ -207,50 +253,10 @@ export const SURAH_CATEGORIES: SurahCategory[] = [
   {
     id: "mufassal_qisar",
     title: "قصار المفصل",
-    desc: "من سورة الضحى (٩٣) إلى سورة الناس (١١٤)",
+    desc: "من الضحى إلى الناس",
     surahIds: Array.from({ length: 22 }, (_, i) => 93 + i),
     badgeText: "٢٢ سورة",
     badgeColor: "#f87171",
-  },
-];
-
-// Special groupings
-export const SPECIAL_CATEGORIES = [
-  {
-    id: "fatiha",
-    title: "الفاتحة",
-    desc: "أم الكتاب — فاتحة القرآن الكريم",
-    surahIds: [1],
-  },
-  {
-    id: "hawameem",
-    title: "الحواميم السبع",
-    desc: "سبع سور تبدأ بـ (حم) — من سورة غافر (٤٠) إلى سورة الأحقاف (٤٦)",
-    surahIds: [40, 41, 42, 43, 44, 45, 46],
-  },
-  {
-    id: "musabbihat",
-    title: "المسبّحات",
-    desc: "السور التي تبدأ بـ (سبّح أو يسبّح) — الإسراء، الحديد، الحشر، الصف، الجمعة، التغابن، الأعلى",
-    surahIds: [17, 57, 59, 61, 62, 64, 87],
-  },
-  {
-    id: "tawasin",
-    title: "الطواسين",
-    desc: "الشعراء، النمل، القصص — تبدأ كل منها بـ (طس أو طسم)",
-    surahIds: [26, 27, 28],
-  },
-  {
-    id: "muawwidhat",
-    title: "المعوذتان",
-    desc: "سورة الفلق وسورة الناس — يُقرَآن معاً للاستعاذة",
-    surahIds: [113, 114],
-  },
-  {
-    id: "zahrawaan",
-    title: "الزهراوان",
-    desc: "البقرة وآل عمران — لنورهما وضيائهما يوم القيامة",
-    surahIds: [2, 3],
   },
 ];
 
