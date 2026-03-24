@@ -1,26 +1,16 @@
 import { useState, useMemo } from "react";
-import { SURAHS, SURAH_CATEGORIES, SPECIAL_CATEGORIES, numToArabic } from "@/data/surahs";
+import { SURAHS, SURAH_CATEGORIES, numToArabic } from "@/data/surahs";
 import CosmosBackground from "@/components/CosmosBackground";
 import SurahCard from "@/components/SurahCard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Search, BookOpen, Headphones, BookMarked, MessageSquare, FileText, Grid3X3, ChevronDown, ChevronUp } from "lucide-react";
-
-const SECTIONS = [
-  { icon: BookOpen, title: "المصاحف", desc: "مصاحف القراءات العشر بطبعات متنوعة" },
-  { icon: Headphones, title: "التلاوات الصوتية", desc: "تلاوات مرتّلة ومجوّدة لمختلف القرّاء" },
-  { icon: FileText, title: "معلومات السور", desc: "أسماء السور وموضوعاتها ومقاصدها" },
-  { icon: BookMarked, title: "خدمة الآية القرآنية", desc: "التفاسير والإعراب والترجمة للآيات" },
-  { icon: MessageSquare, title: "ترجمات القرآن", desc: "ترجمات معتمدة للقرآن الكريم" },
-  { icon: Grid3X3, title: "الموسوعة الموضوعية", desc: "فهرسة موضوعية للقرآن الكريم" },
-];
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Index() {
   const [search, setSearch] = useState("");
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
-  const [showSpecial, setShowSpecial] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return null; // null means show categories
+    if (!search.trim()) return null;
     const q = search.trim().toLowerCase();
     return SURAHS.filter(
       (s) =>
@@ -44,21 +34,27 @@ export default function Index() {
           <ThemeToggle />
         </div>
 
-        {/* Hero */}
-        <header className="text-center pt-8 pb-10 px-4">
-          <p className="font-quran text-lg mb-3" style={{ color: "var(--text-2)" }}>
+        {/* Hero — Dedication */}
+        <header className="text-center pt-6 sm:pt-8 pb-6 sm:pb-10 px-4">
+          <p className="font-quran text-base sm:text-lg mb-3" style={{ color: "var(--text-2)" }}>
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
-          <h1 className="font-quran text-4xl md:text-5xl font-bold mb-3" style={{ color: "var(--text-0)" }}>
-            القرآن الكريم
+          <h1
+            className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 leading-relaxed max-w-2xl mx-auto"
+            style={{
+              color: "var(--text-0)",
+              fontFamily: "'Amiri', serif",
+              lineHeight: 2,
+            }}
+          >
+            هذا الموقع صدقة جارية لروح أمي
+            <br />
+            رزقها الله الفردوس الأعلى من الجنة
           </h1>
-          <p className="text-sm md:text-base max-w-md mx-auto" style={{ color: "var(--text-1)" }}>
-            تدبّر وتلاوة بتجويد مفصّل — اختر سورة وابدأ
-          </p>
         </header>
 
         {/* Search */}
-        <div className="px-4 max-w-2xl mx-auto w-full mb-8">
+        <div className="px-4 max-w-2xl mx-auto w-full mb-6 sm:mb-8">
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-2xl"
             style={{
@@ -70,23 +66,21 @@ export default function Index() {
             <Search className="w-5 h-5 flex-shrink-0" style={{ color: "var(--text-2)" }} />
             <input
               type="text"
-              placeholder="أدخل اسم سورة أو رقمها..."
+              placeholder="ابحث عن سورة بالاسم أو الرقم..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-sm font-quran placeholder:text-[var(--text-3)]"
+              className="flex-1 bg-transparent outline-none text-sm sm:text-base font-quran placeholder:text-[var(--text-3)]"
               style={{ color: "var(--text-0)" }}
             />
           </div>
         </div>
 
-        {/* Search Results or Categories */}
+        {/* Search Results */}
         {filtered ? (
           <section className="px-4 max-w-5xl mx-auto w-full mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-medium" style={{ color: "var(--text-1)" }}>
-                نتائج البحث — {filtered.length} سورة
-              </h2>
-            </div>
+            <h2 className="text-sm font-medium mb-4" style={{ color: "var(--text-1)" }}>
+              نتائج البحث — {filtered.length} سورة
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {filtered.map((surah) => (
                 <SurahCard key={surah.id} surah={surah} />
@@ -99,176 +93,84 @@ export default function Index() {
             )}
           </section>
         ) : (
-          <>
+          /* Collapsible Categories */
+          <section className="px-4 max-w-5xl mx-auto w-full pb-16">
             {/* Fatiha standalone */}
-            <section className="px-4 max-w-5xl mx-auto w-full mb-4">
+            <div className="mb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <SurahCard surah={SURAHS[0]} />
               </div>
-            </section>
-
-            {/* Main Categories */}
-            <section className="px-4 max-w-5xl mx-auto w-full mb-8">
-              <h2 className="text-base font-semibold mb-4" style={{ color: "var(--text-0)" }}>
-                تقسيمات السور
-              </h2>
-              <div className="space-y-3">
-                {SURAH_CATEGORIES.map((cat) => {
-                  const isExpanded = expandedCat === cat.id;
-                  const surahs = getSurahsForCategory(cat.surahIds);
-                  return (
-                    <div
-                      key={cat.id}
-                      className="rounded-2xl overflow-hidden transition-all duration-200"
-                      style={{
-                        background: "var(--glass-card-bg)",
-                        border: "0.5px solid var(--glass-card-border)",
-                        backdropFilter: "blur(20px)",
-                      }}
-                    >
-                      <button
-                        onClick={() => setExpandedCat(isExpanded ? null : cat.id)}
-                        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-right"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: `${cat.badgeColor}18` }}
-                          >
-                            <span className="text-xs font-bold" style={{ color: cat.badgeColor }}>
-                              {numToArabic(cat.surahIds.length)}
-                            </span>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-quran text-base font-bold" style={{ color: "var(--text-0)" }}>
-                              {cat.title}
-                            </div>
-                            <div className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
-                              {cat.desc}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span
-                            className="text-[0.65rem] px-2.5 py-1 rounded-lg"
-                            style={{
-                              background: "var(--category-badge-bg)",
-                              color: "var(--category-badge-color)",
-                            }}
-                          >
-                            {cat.badgeText}
-                          </span>
-                          {isExpanded ? (
-                            <ChevronUp className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                          )}
-                        </div>
-                      </button>
-                      {isExpanded && (
-                        <div className="px-4 pb-4">
-                          <div
-                            className="h-px mb-3"
-                            style={{ background: "var(--glass-thin-border)" }}
-                          />
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {surahs.map((s) => (
-                              <SurahCard key={s.id} surah={s} />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Special Categories */}
-            <section className="px-4 max-w-5xl mx-auto w-full mb-8">
-              <button
-                onClick={() => setShowSpecial(!showSpecial)}
-                className="flex items-center gap-2 mb-4"
-              >
-                <h2 className="text-base font-semibold" style={{ color: "var(--text-0)" }}>
-                  تقسيمات أخرى
-                </h2>
-                <span className="text-xs" style={{ color: "var(--text-2)" }}>
-                  تقسيمات إضافية معروفة عند العلماء
-                </span>
-                {showSpecial ? (
-                  <ChevronUp className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                ) : (
-                  <ChevronDown className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                )}
-              </button>
-              {showSpecial && (
-                <div className="space-y-2">
-                  {SPECIAL_CATEGORIES.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className="px-5 py-3 rounded-xl"
-                      style={{
-                        background: "var(--glass-card-bg)",
-                        border: "0.5px solid var(--glass-card-border)",
-                      }}
-                    >
-                      <div className="font-quran text-sm font-bold mb-0.5" style={{ color: "var(--text-0)" }}>
-                        {cat.title}
-                      </div>
-                      <div className="text-xs" style={{ color: "var(--text-2)" }}>
-                        {cat.desc}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
-        )}
-
-        {/* Sections */}
-        <section className="px-4 max-w-5xl mx-auto w-full pb-16">
-          <div className="flex items-center gap-2 mb-6">
-            <Grid3X3 className="w-5 h-5" style={{ color: "var(--dot-active)" }} />
-            <div>
-              <h2 className="text-base font-semibold" style={{ color: "var(--text-0)" }}>
-                الأقسام الرئيسية
-              </h2>
-              <p className="text-xs" style={{ color: "var(--text-2)" }}>
-                موسوعتك القرآنية الشاملة
-              </p>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {SECTIONS.map((sec) => (
-              <div
-                key={sec.title}
-                className="flex items-start gap-4 p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:scale-[1.01]"
-                style={{
-                  background: "var(--glass-card-bg)",
-                  border: "0.5px solid var(--glass-card-border)",
-                  backdropFilter: "blur(20px)",
-                }}
-              >
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "var(--highlight-bg)" }}
-                >
-                  <sec.icon className="w-5 h-5" style={{ color: "var(--dot-active)" }} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-0)" }}>
-                    {sec.title}
-                  </h3>
-                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
-                    {sec.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+
+            <div className="space-y-3">
+              {SURAH_CATEGORIES.map((cat) => {
+                const isExpanded = expandedCat === cat.id;
+                const surahs = getSurahsForCategory(cat.surahIds);
+                return (
+                  <div
+                    key={cat.id}
+                    className="rounded-2xl overflow-hidden transition-all duration-200"
+                    style={{
+                      background: "var(--glass-card-bg)",
+                      border: "0.5px solid var(--glass-card-border)",
+                      backdropFilter: "blur(20px)",
+                    }}
+                  >
+                    <button
+                      onClick={() => setExpandedCat(isExpanded ? null : cat.id)}
+                      className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${cat.badgeColor}18` }}
+                        >
+                          <span className="text-xs font-bold" style={{ color: cat.badgeColor }}>
+                            {numToArabic(cat.surahIds.length)}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
+                            {cat.title}
+                          </div>
+                          <div className="text-[0.65rem] sm:text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
+                            {cat.desc}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span
+                          className="text-[0.6rem] sm:text-[0.65rem] px-2 sm:px-2.5 py-1 rounded-lg"
+                          style={{
+                            background: "var(--category-badge-bg)",
+                            color: "var(--category-badge-color)",
+                          }}
+                        >
+                          {cat.badgeText}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" style={{ color: "var(--text-2)" }} />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" style={{ color: "var(--text-2)" }} />
+                        )}
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+                        <div className="h-px mb-3" style={{ background: "var(--glass-thin-border)" }} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {surahs.map((s) => (
+                            <SurahCard key={s.id} surah={s} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
