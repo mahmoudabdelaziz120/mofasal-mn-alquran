@@ -57,15 +57,28 @@
     --progress-bar-bg: rgba(255,255,255,0.12);
     --category-badge-bg: rgba(147,197,253, 0.12);
     --category-badge-color: #93c5fd;
+
+    /* Quran text color in dark */
+    --quran-text: rgba(255,255,255, 0.95);
+
+    /* Rules pane card in dark */
+    --rule-card-bg: rgba(255,255,255,0.04);
+    --rule-card-border: rgba(255,255,255,0.07);
+    --rule-card-shadow: none;
+
+    /* Option bg for selects */
+    --select-option-bg: #0a1628;
   }
 
-  /* Light — Warm Parchment */
+  /* ═══════════════════════════════════════════
+     Light — Warm Parchment
+     ═══════════════════════════════════════════ */
   [data-theme="light"] {
-    --background: 40 45% 90%;
+    --background: 47 76% 93%;
     --foreground: 40 50% 15%;
-    --card: 40 35% 88%;
+    --card: 47 50% 92%;
     --card-foreground: 40 50% 15%;
-    --popover: 40 35% 88%;
+    --popover: 47 50% 92%;
     --popover-foreground: 40 50% 15%;
     --primary: 40 65% 35%;
     --primary-foreground: 40 30% 95%;
@@ -81,35 +94,49 @@
     --input: 40 20% 75%;
     --ring: 40 65% 35%;
 
-    --cosmos-bg: linear-gradient(160deg, #F5E6C8 0%, #EDD9A3 50%, #E8D29A 100%);
-    --glass-thin-bg: rgba(128,101,23, 0.06);
-    --glass-thin-border: rgba(128,101,23, 0.12);
-    --glass-card-bg: rgba(128,101,23, 0.08);
-    --glass-card-border: rgba(128,101,23, 0.15);
-    --glass-thick-bg: rgba(245,230,200, 0.85);
-    --glass-thick-border: rgba(128,101,23, 0.20);
+    /* Light cosmos: warm parchment gradient */
+    --cosmos-bg: linear-gradient(160deg, #FEFCE8 0%, #F5E6C8 40%, #EDD9A3 100%);
+    --glass-thin-bg: rgba(255,255,255, 0.92);
+    --glass-thin-border: #E5E7EB;
+    --glass-card-bg: rgba(255,255,255, 0.80);
+    --glass-card-border: rgba(0,0,0, 0.08);
+    --glass-thick-bg: rgba(255,255,255, 0.95);
+    --glass-thick-border: rgba(0,0,0, 0.12);
 
-    --text-0: rgba(80,60,10, 0.95);
-    --text-1: rgba(100,75,20, 0.78);
-    --text-2: rgba(128,101,23, 0.55);
-    --text-3: rgba(128,101,23, 0.35);
+    --text-0: #111827;
+    --text-1: #6B7280;
+    --text-2: #9CA3AF;
+    --text-3: #D1D5DB;
 
-    --highlight-bg: rgba(128,101,23, 0.12);
-    --highlight-border: rgba(128,101,23, 0.30);
+    --highlight-bg: rgba(128,101,23, 0.10);
+    --highlight-border: rgba(128,101,23, 0.35);
     --dot-active: #806517;
     --dot-done: rgba(128,101,23, 0.35);
-    --progress-grad: linear-gradient(to right, #806517, #A08030);
+    --progress-grad: linear-gradient(to right, #806517, #B8960C);
 
     --neb1: transparent;
     --neb2: transparent;
 
-    --rules-pane-bg: rgba(128,101,23, 0.05);
+    --rules-pane-bg: #F9FAFB;
     --ayah-num-bg: rgba(128,101,23, 0.06);
     --ayah-num-border: rgba(128,101,23, 0.12);
     --legend-bg: rgba(128,101,23, 0.06);
     --progress-bar-bg: rgba(128,101,23, 0.15);
     --category-badge-bg: rgba(128,101,23, 0.10);
     --category-badge-color: #806517;
+
+    /* Quran text on parchment */
+    --quran-text: #2B2721;
+
+    /* Mushaf page "paper" feel */
+    --mushaf-bg: #FCF6E3;
+
+    /* Rules pane card in light */
+    --rule-card-bg: #FFFFFF;
+    --rule-card-border: #F3F4F6;
+    --rule-card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+
+    --select-option-bg: #FFFFFF;
   }
 }
 
@@ -165,6 +192,24 @@ tajweed.qalaqah { color: #4488EE; }
 tajweed.ghunnah { color: #008B00; }
 tajweed.iqlab { color: #26BFFD; }
 span.end { display: none; }
+
+/* Accordion smooth animation */
+.accordion-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+}
+.accordion-content.expanded {
+  max-height: 3000px;
+  opacity: 1;
+}
+.accordion-arrow {
+  transition: transform 0.3s ease;
+}
+.accordion-arrow.rotated {
+  transform: rotate(180deg);
+}
 
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar { width: 3px; }

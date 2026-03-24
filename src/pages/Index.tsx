@@ -3,7 +3,7 @@ import { SURAHS, SURAH_CATEGORIES, numToArabic } from "@/data/surahs";
 import CosmosBackground from "@/components/CosmosBackground";
 import SurahCard from "@/components/SurahCard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 
 export default function Index() {
   const [search, setSearch] = useState("");
@@ -22,6 +22,10 @@ export default function Index() {
 
   const getSurahsForCategory = (surahIds: number[]) =>
     surahIds.map((id) => SURAHS.find((s) => s.id === id)!).filter(Boolean);
+
+  const toggleCat = (catId: string) => {
+    setExpandedCat((prev) => (prev === catId ? null : catId));
+  };
 
   return (
     <div className="relative min-h-screen" dir="rtl">
@@ -93,7 +97,7 @@ export default function Index() {
             )}
           </section>
         ) : (
-          /* Collapsible Categories */
+          /* Collapsible Categories with smooth accordion */
           <section className="px-4 max-w-5xl mx-auto w-full pb-16">
             {/* Fatiha standalone */}
             <div className="mb-4">
@@ -117,8 +121,11 @@ export default function Index() {
                     }}
                   >
                     <button
-                      onClick={() => setExpandedCat(isExpanded ? null : cat.id)}
-                      className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right"
+                      onClick={() => toggleCat(cat.id)}
+                      className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right transition-colors duration-200"
+                      style={{
+                        background: isExpanded ? "var(--highlight-bg)" : "transparent",
+                      }}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div
@@ -148,14 +155,14 @@ export default function Index() {
                         >
                           {cat.badgeText}
                         </span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" style={{ color: "var(--text-2)" }} />
-                        )}
+                        <ChevronDown
+                          className={`w-4 h-4 accordion-arrow ${isExpanded ? "rotated" : ""}`}
+                          style={{ color: "var(--text-2)" }}
+                        />
                       </div>
                     </button>
-                    {isExpanded && (
+                    {/* Smooth accordion content */}
+                    <div className={`accordion-content ${isExpanded ? "expanded" : ""}`}>
                       <div className="px-3 sm:px-4 pb-3 sm:pb-4">
                         <div className="h-px mb-3" style={{ background: "var(--glass-thin-border)" }} />
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -164,7 +171,7 @@ export default function Index() {
                           ))}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}

@@ -8,7 +8,7 @@ import { Play, Pause, SkipBack, SkipForward, Repeat, Home, PanelRightClose, Pane
 
 interface AyahData {
   num: number;
-  text: string; // raw bracket-format tajweed text
+  text: string;
 }
 
 function useIsDarkMode() {
@@ -69,7 +69,7 @@ export default function SurahReader() {
     } catch {}
   }, [curIdx, reciter, surahNum]);
 
-  // Fetch ayahs from AlQuran.cloud tajweed API
+  // Fetch ayahs
   useEffect(() => {
     setLoading(true);
     setAyahs([]);
@@ -120,7 +120,7 @@ export default function SurahReader() {
     return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, []);
 
-  // Auto-reload when reciter changes during playback
+  // Auto-reload when reciter changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || ayahs.length === 0) return;
@@ -195,10 +195,26 @@ export default function SurahReader() {
     }
   }, [curIdx]);
 
-  // Extract tajweed codes from current ayah
+  // Extract tajweed codes for current ayah
   const currentCodes = useMemo(() => {
     if (!ayahs[curIdx]) return [];
     return extractTajweedCodes(ayahs[curIdx].text);
+  }, [ayahs, curIdx]);
+
+  // Extract the actual colored words for each code from current ayah
+  const codeExamples = useMemo(() => {
+    if (!ayahs[curIdx]) return {};
+    const map: Record<string, string[]> = {};
+    const regex = /\[([a-z]+)(?::\d+)?\[([^\]]+)\]/g;
+    regex.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(ayahs[curIdx].text)) !== null) {
+      const code = match[1];
+      const word = match[2];
+      if (!map[code]) map[code] = [];
+      if (!map[code].includes(word)) map[code].push(word);
+    }
+    return map;
   }, [ayahs, curIdx]);
 
   const colors = isDark ? TAJWEED_COLORS_DARK : TAJWEED_COLORS_LIGHT;
@@ -219,7 +235,14 @@ export default function SurahReader() {
       <CosmosBackground />
       <div className="relative z-10 flex flex-col h-full">
         {/* Header */}
-        <div className="flex-shrink-0" style={{ background: "var(--glass-thin-bg)", backdropFilter: "blur(20px)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
+        <div
+          className="flex-shrink-0"
+          style={{
+            background: "var(--glass-thin-bg)",
+            backdropFilter: "blur(20px)",
+            borderBottom: "0.5px solid var(--glass-thin-border)",
+          }}
+        >
           <div className="px-3 sm:px-4 py-2 sm:py-2.5">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -234,7 +257,6 @@ export default function SurahReader() {
                 <span className="hidden sm:inline text-[0.6875rem] px-2.5 py-1 rounded-lg" style={{ color: "var(--text-2)", background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
                   {surah.revelationPlace === "makkah" ? "مكية" : "مدنية"} · {numToArabic(surah.versesCount)} آية
                 </span>
-                {/* Toggle rules panel on mobile */}
                 <button onClick={() => setShowRules(!showRules)} className="md:hidden w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
                   {showRules ? <PanelRightClose className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} /> : <PanelRightOpen className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} />}
                 </button>
@@ -250,7 +272,7 @@ export default function SurahReader() {
                 style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-thin-border)", color: "var(--text-0)" }}
               >
                 {RECITERS.map((r) => (
-                  <option key={r.id} value={r.id} style={{ background: "#0a1628", color: "var(--text-0)" }}>{r.name}</option>
+                  <option key={r.id} value={r.id} style={{ background: "var(--select-option-bg)", color: "var(--text-0)" }}>{r.name}</option>
                 ))}
               </select>
             </div>
@@ -297,16 +319,26 @@ export default function SurahReader() {
         {/* Main content */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Mushaf pane */}
-          <div ref={mushafRef} className="flex-1 overflow-y-auto px-4 sm:px-7 py-3 sm:py-4 pb-8 sm:pb-10 custom-scrollbar" style={{ borderLeft: showRules ? "0.5px solid var(--glass-thin-border)" : "none" }}>
+          <div
+            ref={mushafRef}
+            className="flex-1 overflow-y-auto px-4 sm:px-7 py-3 sm:py-4 pb-8 sm:pb-10 custom-scrollbar"
+            style={{
+              borderLeft: showRules ? "0.5px solid var(--glass-thin-border)" : "none",
+              background: isDark ? "transparent" : "var(--mushaf-bg, transparent)",
+            }}
+          >
             {showBasmalah && (
-              <div className="text-center font-quran text-lg sm:text-xl mb-3 sm:mb-3.5 pb-2 sm:pb-3" style={{ color: "var(--text-1)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
+              <div className="text-center font-quran text-lg sm:text-xl mb-3 sm:mb-3.5 pb-2 sm:pb-3" style={{ color: "var(--quran-text, var(--text-1))", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
               </div>
             )}
             {loading ? (
               <p className="text-center py-10 font-quran" style={{ color: "var(--text-2)" }}>جاري تحميل الآيات...</p>
             ) : (
-              <div className="font-quran text-lg sm:text-xl md:text-[1.375rem] leading-[2.5] sm:leading-[2.7] md:leading-[2.9] text-justify" style={{ color: "var(--text-0)" }}>
+              <div
+                className="font-quran text-lg sm:text-xl md:text-[1.375rem] lg:text-2xl leading-[2.5] sm:leading-[2.7] md:leading-[2.9] text-justify"
+                style={{ color: "var(--quran-text, var(--text-0))" }}
+              >
                 {ayahs.map((aya, i) => (
                   <span
                     key={i}
@@ -336,27 +368,76 @@ export default function SurahReader() {
             )}
           </div>
 
-          {/* Rules pane — hidden on mobile unless toggled */}
+          {/* Rules pane */}
           {showRules && (
-            <div className="w-[180px] sm:w-[220px] md:w-[260px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar" style={{ background: "var(--rules-pane-bg)" }}>
+            <div
+              className="w-[180px] sm:w-[220px] md:w-[260px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
+              style={{ background: "var(--rules-pane-bg)" }}
+            >
               <div className="text-[0.5625rem] sm:text-[0.625rem] uppercase tracking-widest mb-2 sm:mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
               </div>
+
+              {/* Active ayah preview in rules pane */}
+              {ayahs[curIdx] && (
+                <div
+                  className="font-quran text-xs sm:text-sm leading-[2] p-2.5 rounded-xl mb-3 text-right"
+                  style={{
+                    background: "var(--rule-card-bg)",
+                    border: "0.5px solid var(--rule-card-border)",
+                    boxShadow: "var(--rule-card-shadow)",
+                    color: "var(--quran-text, var(--text-0))",
+                  }}
+                >
+                  {parseTajweedText(ayahs[curIdx].text, isDark)}
+                </div>
+              )}
+
               {currentCodes.length === 0 ? (
                 <p className="text-[0.6875rem] text-center py-5 font-quran" style={{ color: "var(--text-3)" }}>لا توجد أحكام خاصة</p>
               ) : (
-                currentCodes.map((code) => (
-                  <div
-                    key={code}
-                    className="flex items-start gap-2 p-2 sm:p-2.5 rounded-xl mb-1.5"
-                    style={{ background: "var(--ayah-num-bg)", border: "0.5px solid var(--ayah-num-border)", animation: "fadeSlideUp 0.2s ease" }}
-                  >
-                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: colors[code] || "#888" }} />
-                    <div className="text-[0.6875rem] sm:text-xs font-medium" style={{ color: colors[code] || "#888" }}>
-                      {TAJWEED_RULE_LABELS[code] || code}
+                currentCodes.map((code) => {
+                  const color = colors[code] || "#888";
+                  const examples = codeExamples[code] || [];
+                  return (
+                    <div
+                      key={code}
+                      className="p-2.5 sm:p-3 rounded-xl mb-2"
+                      style={{
+                        background: "var(--rule-card-bg)",
+                        border: "0.5px solid var(--rule-card-border)",
+                        boxShadow: "var(--rule-card-shadow)",
+                        animation: "fadeSlideUp 0.2s ease",
+                      }}
+                    >
+                      {/* Rule header: dot + name */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                        <span className="text-[0.6875rem] sm:text-xs font-bold" style={{ color }}>
+                          {TAJWEED_RULE_LABELS[code] || code}
+                        </span>
+                      </div>
+                      {/* Example words as badges */}
+                      {examples.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {examples.slice(0, 3).map((word, wi) => (
+                            <span
+                              key={wi}
+                              className="font-quran text-[0.6875rem] sm:text-xs px-2 py-0.5 rounded-md"
+                              style={{
+                                background: `${color}1A`,
+                                color: color,
+                                border: `0.5px solid ${color}33`,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
@@ -365,7 +446,7 @@ export default function SurahReader() {
         {/* Legend strip */}
         <div className="flex-shrink-0 flex flex-wrap gap-1 items-center px-3 sm:px-4 py-1 sm:py-1.5" style={{ background: "var(--legend-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}>
           {Object.entries(TAJWEED_RULE_LABELS)
-            .filter(([code]) => !["s", "d", "b"].includes(code)) // skip duplicates of gray group
+            .filter(([code]) => !["s", "d", "b"].includes(code))
             .map(([code, label]) => (
               <span key={code} className="text-[0.5rem] sm:text-[0.625rem] px-1.5 sm:px-2 py-0.5 rounded-md font-medium whitespace-nowrap" style={{ background: `${colors[code]}22`, color: colors[code], border: `0.5px solid ${colors[code]}44` }}>
                 {label}
