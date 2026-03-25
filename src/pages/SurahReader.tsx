@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl } from "@/data/surahs";
-import { parseTajweedText, extractTajweedCodes } from "@/lib/tajweedParser";
+import { parseTajweedText, extractTajweedOccurrences } from "@/lib/tajweedParser";
 import CosmosBackground from "@/components/CosmosBackground";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Play, Pause, SkipBack, SkipForward, Repeat, Home, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Repeat, PanelRightClose, PanelRightOpen } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 
 interface AyahData {
   num: number;
@@ -12,9 +13,7 @@ interface AyahData {
 }
 
 function useIsDarkMode() {
-  const [dark, setDark] = useState(() => {
-    return document.documentElement.getAttribute("data-theme") !== "light";
-  });
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute("data-theme") !== "light");
   useEffect(() => {
     const obs = new MutationObserver(() => {
       setDark(document.documentElement.getAttribute("data-theme") !== "light");
@@ -24,6 +23,27 @@ function useIsDarkMode() {
   }, []);
   return dark;
 }
+
+// Tajweed rule descriptions
+const RULE_DESCRIPTIONS: Record<string, string> = {
+  h: "همزة الوصل — تُحذف وصلاً",
+  s: "حرف ساكن لا يُلفظ",
+  l: "لام شمسية — تُدغم في الحرف بعدها",
+  n: "مدّ طبيعي — حركتان",
+  p: "مدّ جائز منفصل — ٢-٥ حركات",
+  m: "مدّ لازم — ٦ حركات",
+  q: "قلقلة — اضطراب الحرف عند سكونه",
+  o: "مدّ واجب متصل — ٤-٥ حركات",
+  c: "إخفاء شفوي — الميم الساكنة قبل الباء",
+  f: "إخفاء — النون الساكنة/التنوين قبل حروف الإخفاء",
+  w: "إدغام شفوي — الميم الساكنة قبل الميم",
+  i: "إقلاب — النون الساكنة/التنوين قبل الباء",
+  a: "إدغام بغنة — التنوين أو النون الساكنة",
+  u: "إدغام بغير غنة — النون الساكنة قبل اللام والراء",
+  g: "غنة — صوت يخرج من الخيشوم",
+  d: "إدغام متجانسين",
+  b: "إدغام متقاربين",
+};
 
 export default function SurahReader() {
   const { id } = useParams<{ id: string }>();
@@ -100,7 +120,7 @@ export default function SurahReader() {
     const onDurationChange = () => setDurTime(fmt(audio.duration));
     const onEnded = () => {
       if (repeatMode) { audio.play().catch(() => {}); }
-      else if (curIdx < ayahs.length - 1) loadAya(curIdx + 1, true);
+      else if (curIdx < ayahs.length - 1) loadAyaDirect(curIdx + 1, true, reciter);
       else setIsPlaying(false);
     };
     const onError = () => { clearTimeout(timeoutRef.current!); setIsPlaying(false); };
@@ -161,6 +181,21 @@ export default function SurahReader() {
     [ayahs, reciter, surahNum] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  // Select ayah (show rules) without playing audio
+  const selectAyah = (idx: number) => {
+    setCurIdx(idx);
+    // Scroll to it
+    const el = document.getElementById(`aw-${idx}`);
+    if (el && mushafRef.current) {
+      const pane = mushafRef.current;
+      const paneRect = pane.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const elRelTop = elRect.top - paneRect.top + pane.scrollTop;
+      const target = elRelTop - pane.clientHeight / 2 + elRect.height / 2;
+      pane.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    }
+  };
+
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -182,8 +217,9 @@ export default function SurahReader() {
     audio.currentTime = pct * audio.duration;
   };
 
-  // Scroll to active ayah
+  // Scroll to active ayah when playing
   useEffect(() => {
+    if (!isPlaying) return;
     const el = document.getElementById(`aw-${curIdx}`);
     if (el && mushafRef.current) {
       const pane = mushafRef.current;
@@ -193,28 +229,12 @@ export default function SurahReader() {
       const target = elRelTop - pane.clientHeight / 2 + elRect.height / 2;
       pane.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
     }
-  }, [curIdx]);
+  }, [curIdx, isPlaying]);
 
-  // Extract tajweed codes for current ayah
-  const currentCodes = useMemo(() => {
+  // Extract tajweed occurrences with full context
+  const ruleOccurrences = useMemo(() => {
     if (!ayahs[curIdx]) return [];
-    return extractTajweedCodes(ayahs[curIdx].text);
-  }, [ayahs, curIdx]);
-
-  // Extract the actual colored words for each code from current ayah
-  const codeExamples = useMemo(() => {
-    if (!ayahs[curIdx]) return {};
-    const map: Record<string, string[]> = {};
-    const regex = /\[([a-z]+)(?::\d+)?\[([^\]]+)\]/g;
-    regex.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(ayahs[curIdx].text)) !== null) {
-      const code = match[1];
-      const word = match[2];
-      if (!map[code]) map[code] = [];
-      if (!map[code].includes(word)) map[code].push(word);
-    }
-    return map;
+    return extractTajweedOccurrences(ayahs[curIdx].text);
   }, [ayahs, curIdx]);
 
   const colors = isDark ? TAJWEED_COLORS_DARK : TAJWEED_COLORS_LIGHT;
@@ -246,8 +266,9 @@ export default function SurahReader() {
           <div className="px-3 sm:px-4 py-2 sm:py-2.5">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => navigate("/")} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)" }}>
-                  <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: "var(--text-1)" }} />
+                {/* Logo */}
+                <button onClick={() => navigate("/")} className="flex-shrink-0">
+                  <img src={logoImg} alt="الرئيسية" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover" />
                 </button>
                 <h1 className="font-quran text-base sm:text-lg font-bold" style={{ color: "var(--text-0)" }}>
                   سورة {surah.name}
@@ -263,7 +284,8 @@ export default function SurahReader() {
                 <ThemeToggle />
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            {/* Reciter + Surah selectors */}
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[0.625rem] sm:text-[0.6875rem]" style={{ color: "var(--text-2)" }}>القارئ:</span>
               <select
                 value={reciter}
@@ -273,6 +295,19 @@ export default function SurahReader() {
               >
                 {RECITERS.map((r) => (
                   <option key={r.id} value={r.id} style={{ background: "var(--select-option-bg)", color: "var(--text-0)" }}>{r.name}</option>
+                ))}
+              </select>
+              <span className="text-[0.625rem] sm:text-[0.6875rem] mr-2" style={{ color: "var(--text-2)" }}>السورة:</span>
+              <select
+                value={surahNum}
+                onChange={(e) => navigate(`/surah/${e.target.value}`)}
+                className="text-[0.6875rem] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg outline-none cursor-pointer font-quran"
+                style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-thin-border)", color: "var(--text-0)" }}
+              >
+                {SURAHS.map((s) => (
+                  <option key={s.id} value={s.id} style={{ background: "var(--select-option-bg)", color: "var(--text-0)" }}>
+                    {numToArabic(s.id)}. {s.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -310,7 +345,7 @@ export default function SurahReader() {
             {/* Ayah dots */}
             <div className="flex gap-[2px] sm:gap-[3px] flex-wrap mt-1.5 sm:mt-2" dir="ltr">
               {ayahs.map((_, i) => (
-                <div key={i} onClick={() => loadAya(i, true)} className="h-[2.5px] sm:h-[3px] rounded-sm cursor-pointer flex-1 transition-all duration-200" style={{ minWidth: 4, maxWidth: 14, background: i === curIdx ? "var(--dot-active)" : i < curIdx ? "var(--dot-done)" : "var(--progress-bar-bg)", boxShadow: i === curIdx ? "0 0 5px var(--dot-active)" : "none" }} />
+                <div key={i} onClick={() => selectAyah(i)} className="h-[2.5px] sm:h-[3px] rounded-sm cursor-pointer flex-1 transition-all duration-200" style={{ minWidth: 4, maxWidth: 14, background: i === curIdx ? "var(--dot-active)" : i < curIdx ? "var(--dot-done)" : "var(--progress-bar-bg)", boxShadow: i === curIdx ? "0 0 5px var(--dot-active)" : "none" }} />
               ))}
             </div>
           </div>
@@ -336,14 +371,14 @@ export default function SurahReader() {
               <p className="text-center py-10 font-quran" style={{ color: "var(--text-2)" }}>جاري تحميل الآيات...</p>
             ) : (
               <div
-                className="font-quran text-lg sm:text-xl md:text-[1.375rem] lg:text-2xl leading-[2.5] sm:leading-[2.7] md:leading-[2.9] text-justify"
+                className="font-quran quran-text-responsive leading-[2.5] sm:leading-[2.7] md:leading-[2.9] text-justify"
                 style={{ color: "var(--quran-text, var(--text-0))" }}
               >
                 {ayahs.map((aya, i) => (
                   <span
                     key={i}
                     id={`aw-${i}`}
-                    onClick={() => loadAya(i, true)}
+                    onClick={() => selectAyah(i)}
                     className="inline rounded-[5px] px-[1px] cursor-pointer transition-all duration-150"
                     style={{
                       background: i === curIdx ? "var(--highlight-bg)" : "transparent",
@@ -352,7 +387,7 @@ export default function SurahReader() {
                   >
                     {parseTajweedText(aya.text, isDark)}
                     <span
-                      className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[0.5rem] sm:text-[0.625rem] mx-[2px] sm:mx-[3px] align-middle"
+                      className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[0.5625rem] sm:text-[0.6875rem] mx-[2px] sm:mx-[3px] align-middle"
                       style={{
                         background: "var(--ayah-num-bg)",
                         border: "0.5px solid var(--ayah-num-border)",
@@ -371,14 +406,14 @@ export default function SurahReader() {
           {/* Rules pane */}
           {showRules && (
             <div
-              className="w-[180px] sm:w-[220px] md:w-[260px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
+              className="w-[200px] sm:w-[240px] md:w-[280px] lg:w-[310px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
               style={{ background: "var(--rules-pane-bg)" }}
             >
               <div className="text-[0.5625rem] sm:text-[0.625rem] uppercase tracking-widest mb-2 sm:mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
               </div>
 
-              {/* Active ayah preview in rules pane */}
+              {/* Active ayah preview */}
               {ayahs[curIdx] && (
                 <div
                   className="font-quran text-xs sm:text-sm leading-[2] p-2.5 rounded-xl mb-3 text-right"
@@ -393,48 +428,47 @@ export default function SurahReader() {
                 </div>
               )}
 
-              {currentCodes.length === 0 ? (
+              {ruleOccurrences.length === 0 ? (
                 <p className="text-[0.6875rem] text-center py-5 font-quran" style={{ color: "var(--text-3)" }}>لا توجد أحكام خاصة</p>
               ) : (
-                currentCodes.map((code) => {
-                  const color = colors[code] || "#888";
-                  const examples = codeExamples[code] || [];
+                ruleOccurrences.map((occ, idx) => {
+                  const color = colors[occ.code] || "#888";
                   return (
                     <div
-                      key={code}
+                      key={`${occ.code}-${idx}`}
                       className="p-2.5 sm:p-3 rounded-xl mb-2"
                       style={{
                         background: "var(--rule-card-bg)",
                         border: "0.5px solid var(--rule-card-border)",
                         boxShadow: "var(--rule-card-shadow)",
+                        borderRight: `3px solid ${color}`,
                         animation: "fadeSlideUp 0.2s ease",
                       }}
                     >
                       {/* Rule header: dot + name */}
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        <span className="text-[0.6875rem] sm:text-xs font-bold" style={{ color }}>
-                          {TAJWEED_RULE_LABELS[code] || code}
+                        <span className="text-[0.75rem] sm:text-sm font-bold" style={{ color }}>
+                          {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                         </span>
                       </div>
-                      {/* Example words as badges */}
-                      {examples.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {examples.slice(0, 3).map((word, wi) => (
-                            <span
-                              key={wi}
-                              className="font-quran text-[0.6875rem] sm:text-xs px-2 py-0.5 rounded-md"
-                              style={{
-                                background: `${color}1A`,
-                                color: color,
-                                border: `0.5px solid ${color}33`,
-                              }}
-                            >
-                              {word}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {/* Context word as badge */}
+                      <div className="mt-1.5 mb-1.5">
+                        <span
+                          className="font-quran text-[0.8125rem] sm:text-sm px-2.5 py-1 rounded-lg inline-block"
+                          style={{
+                            background: `${color}1A`,
+                            color: color,
+                            border: `0.5px solid ${color}33`,
+                          }}
+                        >
+                          {occ.context}
+                        </span>
+                      </div>
+                      {/* Description */}
+                      <p className="text-[0.6rem] sm:text-[0.6875rem] mt-1" style={{ color: "var(--text-2)" }}>
+                        {RULE_DESCRIPTIONS[occ.code] || ""}
+                      </p>
                     </div>
                   );
                 })
