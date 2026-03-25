@@ -1,7 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import lightBgImg from "@/assets/light-bg.png";
 
 export default function CosmosBackground() {
   const starsRef = useRef<HTMLDivElement>(null);
+  const [isLight, setIsLight] = useState(() => document.documentElement.getAttribute("data-theme") === "light");
+
+  useEffect(() => {
+    const obs = new MutationObserver(() => {
+      setIsLight(document.documentElement.getAttribute("data-theme") === "light");
+    });
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = starsRef.current;
@@ -22,10 +32,26 @@ export default function CosmosBackground() {
     }
   }, []);
 
+  if (isLight) {
+    return (
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${lightBgImg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {/* Subtle overlay to ensure readability */}
+        <div className="absolute inset-0" style={{ background: "rgba(235,228,212,0.75)" }} />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-0" style={{ background: "var(--cosmos-bg)" }}>
       <div ref={starsRef} className="absolute inset-0 pointer-events-none" />
-      {/* Nebulae */}
       <div
         className="absolute pointer-events-none"
         style={{
