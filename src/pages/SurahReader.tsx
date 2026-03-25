@@ -140,15 +140,17 @@ export default function SurahReader() {
     return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, []);
 
-  // Auto-reload when reciter changes
+  // Auto-reload audio when reciter changes OR when curIdx changes (keep playing state)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || ayahs.length === 0) return;
-    if (audio.src && audio.src !== window.location.href) {
-      const wasPlaying = isPlayingRef.current;
+    const wasPlaying = isPlayingRef.current;
+    // Always update audio source to match current ayah & reciter
+    const newSrc = ayaUrl(surahNum, ayahs[curIdx]?.num || 1, reciter);
+    if (audio.src !== newSrc) {
       loadAyaDirect(curIdx, wasPlaying, reciter);
     }
-  }, [reciter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reciter, curIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fmt = (s: number) => {
     if (!s || isNaN(s)) return "0:00";

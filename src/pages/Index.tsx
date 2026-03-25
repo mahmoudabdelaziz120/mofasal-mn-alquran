@@ -1,14 +1,28 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { SURAHS, SURAH_CATEGORIES, numToArabic } from "@/data/surahs";
 import CosmosBackground from "@/components/CosmosBackground";
 import SurahCard from "@/components/SurahCard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, BookOpen } from "lucide-react";
 import logoImg from "@/assets/logo.png";
+
+// Main sections for the app
+const MAIN_SECTIONS = [
+  {
+    id: "tafsir",
+    title: "التفسير الميسر",
+    desc: "تفسير مبسط لكل آيات القرآن الكريم",
+    icon: "📖",
+    route: "/tafsir",
+  },
+];
 
 export default function Index() {
   const [search, setSearch] = useState("");
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
+  const [showSurahSection, setShowSurahSection] = useState(false);
+  const navigate = useNavigate();
 
   const filtered = useMemo(() => {
     if (!search.trim()) return null;
@@ -98,78 +112,140 @@ export default function Index() {
             )}
           </section>
         ) : (
-          /* Collapsible Categories */
-          <section className="px-4 max-w-5xl mx-auto w-full pb-16">
-            {/* Fatiha standalone */}
-            <div className="mb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <SurahCard surah={SURAHS[0]} />
+          <section className="px-4 max-w-5xl mx-auto w-full pb-16 space-y-6">
+            {/* Main Sections */}
+            <div>
+              <h2 className="font-quran text-sm sm:text-base font-bold mb-3 px-1" style={{ color: "var(--text-1)" }}>
+                الأقسام الرئيسية
+              </h2>
+              <div className="space-y-2">
+                {MAIN_SECTIONS.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => navigate(section.route)}
+                    className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-right transition-all duration-200 glass-card-themed group"
+                  >
+                    <div
+                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                      style={{ background: "var(--highlight-bg)" }}
+                    >
+                      {section.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
+                        {section.title}
+                      </div>
+                      <div className="text-[0.65rem] sm:text-xs" style={{ color: "var(--text-2)" }}>
+                        {section.desc}
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity flex-shrink-0 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="space-y-3">
-              {SURAH_CATEGORIES.map((cat) => {
-                const isExpanded = expandedCat === cat.id;
-                const surahs = getSurahsForCategory(cat.surahIds);
-                return (
+            {/* Surahs — Collapsible outer accordion */}
+            <div>
+              <button
+                onClick={() => setShowSurahSection(!showSurahSection)}
+                className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-right transition-all duration-200 glass-card-themed mb-2"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div
-                    key={cat.id}
-                    className="rounded-2xl overflow-hidden transition-all duration-200 glass-card-themed"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "var(--highlight-bg)" }}
                   >
-                    <button
-                      onClick={() => toggleCat(cat.id)}
-                      className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right transition-colors duration-200"
-                      style={{
-                        background: isExpanded ? "var(--highlight-bg)" : "transparent",
-                      }}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div
-                          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${cat.badgeColor}18` }}
-                        >
-                          <span className="text-xs font-bold" style={{ color: cat.badgeColor }}>
-                            {numToArabic(cat.surahIds.length)}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
-                            {cat.title}
-                          </div>
-                          <div className="text-[0.65rem] sm:text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
-                            {cat.desc}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span
-                          className="text-[0.6rem] sm:text-[0.65rem] px-2 sm:px-2.5 py-1 rounded-lg"
-                          style={{
-                            background: "var(--category-badge-bg)",
-                            color: "var(--category-badge-color)",
-                          }}
-                        >
-                          {cat.badgeText}
-                        </span>
-                        <ChevronDown
-                          className={`w-4 h-4 accordion-arrow ${isExpanded ? "rotated" : ""}`}
-                          style={{ color: "var(--text-2)" }}
-                        />
-                      </div>
-                    </button>
-                    <div className={`accordion-content ${isExpanded ? "expanded" : ""}`}>
-                      <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-                        <div className="h-px mb-3" style={{ background: "var(--glass-thin-border)" }} />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {surahs.map((s) => (
-                            <SurahCard key={s.id} surah={s} />
-                          ))}
-                        </div>
-                      </div>
+                    <BookOpen className="w-5 h-5" style={{ color: "var(--dot-active)" }} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
+                      سور القرآن الكريم
+                    </div>
+                    <div className="text-[0.65rem] sm:text-xs" style={{ color: "var(--text-2)" }}>
+                      ١١٤ سورة مقسمة حسب التصنيف التقليدي
                     </div>
                   </div>
-                );
-              })}
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 accordion-arrow ${showSurahSection ? "rotated" : ""}`}
+                  style={{ color: "var(--text-2)" }}
+                />
+              </button>
+
+              <div className={`accordion-content ${showSurahSection ? "expanded" : ""}`}>
+                {/* Fatiha standalone */}
+                <div className="mb-3 px-1">
+                  <SurahCard surah={SURAHS[0]} />
+                </div>
+
+                <div className="space-y-2 px-1">
+                  {SURAH_CATEGORIES.map((cat) => {
+                    const isExpanded = expandedCat === cat.id;
+                    const surahs = getSurahsForCategory(cat.surahIds);
+                    return (
+                      <div
+                        key={cat.id}
+                        className="rounded-2xl overflow-hidden transition-all duration-200 glass-card-themed"
+                      >
+                        <button
+                          onClick={() => toggleCat(cat.id)}
+                          className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right transition-colors duration-200"
+                          style={{
+                            background: isExpanded ? "var(--highlight-bg)" : "transparent",
+                          }}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: `${cat.badgeColor}18` }}
+                            >
+                              <span className="text-xs font-bold" style={{ color: cat.badgeColor }}>
+                                {numToArabic(cat.surahIds.length)}
+                              </span>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
+                                {cat.title}
+                              </div>
+                              <div className="text-[0.65rem] sm:text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
+                                {cat.desc}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span
+                              className="text-[0.6rem] sm:text-[0.65rem] px-2 sm:px-2.5 py-1 rounded-lg"
+                              style={{
+                                background: "var(--category-badge-bg)",
+                                color: "var(--category-badge-color)",
+                              }}
+                            >
+                              {cat.badgeText}
+                            </span>
+                            <ChevronDown
+                              className={`w-4 h-4 accordion-arrow ${isExpanded ? "rotated" : ""}`}
+                              style={{ color: "var(--text-2)" }}
+                            />
+                          </div>
+                        </button>
+                        <div className={`accordion-content ${isExpanded ? "expanded" : ""}`}>
+                          <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+                            <div className="h-px mb-3" style={{ background: "var(--glass-thin-border)" }} />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {surahs.map((s) => (
+                                <SurahCard key={s.id} surah={s} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </section>
         )}
