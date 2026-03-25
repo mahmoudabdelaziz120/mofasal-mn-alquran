@@ -4,6 +4,7 @@ import CosmosBackground from "@/components/CosmosBackground";
 import SurahCard from "@/components/SurahCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Search, ChevronDown } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 
 export default function Index() {
   const [search, setSearch] = useState("");
@@ -32,9 +33,9 @@ export default function Index() {
       <CosmosBackground />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header with theme toggle */}
+        {/* Header: logo + theme toggle */}
         <div className="flex justify-between items-center px-4 pt-4">
-          <div />
+          <img src={logoImg} alt="المفصل من القرآن" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover" />
           <ThemeToggle />
         </div>
 
@@ -62,9 +63,9 @@ export default function Index() {
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-2xl"
             style={{
-              background: "var(--glass-thin-bg)",
-              border: "0.5px solid var(--glass-thin-border)",
-              backdropFilter: "blur(20px)",
+              background: "var(--glass-card-bg)",
+              border: "0.5px solid var(--glass-card-border)",
+              backdropFilter: "blur(40px)",
             }}
           >
             <Search className="w-5 h-5 flex-shrink-0" style={{ color: "var(--text-2)" }} />
@@ -97,7 +98,7 @@ export default function Index() {
             )}
           </section>
         ) : (
-          /* Collapsible Categories with smooth accordion */
+          /* Collapsible Categories */
           <section className="px-4 max-w-5xl mx-auto w-full pb-16">
             {/* Fatiha standalone */}
             <div className="mb-4">
@@ -113,12 +114,7 @@ export default function Index() {
                 return (
                   <div
                     key={cat.id}
-                    className="rounded-2xl overflow-hidden transition-all duration-200"
-                    style={{
-                      background: "var(--glass-card-bg)",
-                      border: "0.5px solid var(--glass-card-border)",
-                      backdropFilter: "blur(20px)",
-                    }}
+                    className="rounded-2xl overflow-hidden transition-all duration-200 glass-card-themed"
                   >
                     <button
                       onClick={() => toggleCat(cat.id)}
@@ -161,7 +157,6 @@ export default function Index() {
                         />
                       </div>
                     </button>
-                    {/* Smooth accordion content */}
                     <div className={`accordion-content ${isExpanded ? "expanded" : ""}`}>
                       <div className="px-3 sm:px-4 pb-3 sm:pb-4">
                         <div className="h-px mb-3" style={{ background: "var(--glass-thin-border)" }} />
