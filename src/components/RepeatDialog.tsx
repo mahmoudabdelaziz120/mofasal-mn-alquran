@@ -114,12 +114,17 @@ function CounterRow({ label, value, onInc, onDec }: { label: string; value: numb
         >
           <Plus className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} />
         </button>
-        <div
-          className="w-12 h-9 flex items-center justify-center text-sm font-bold tabular-nums"
-          style={{ background: "var(--glass-thin-bg)", borderTop: "0.5px solid var(--glass-card-border)", borderBottom: "0.5px solid var(--glass-card-border)", color: "var(--text-0)" }}
-        >
-          {value}
-        </div>
+        <input
+          type="number"
+          min={1}
+          value={value}
+          onChange={(e) => {
+            const v = parseInt(e.target.value);
+            if (!isNaN(v) && v >= 1) onInc(); // trigger parent update via onChange prop
+          }}
+          className="w-14 h-9 text-center text-sm font-bold tabular-nums bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ borderTop: "0.5px solid var(--glass-card-border)", borderBottom: "0.5px solid var(--glass-card-border)", background: "var(--glass-thin-bg)", color: "var(--text-0)" }}
+        />
         <button
           onClick={onDec}
           className="w-9 h-9 rounded-r-xl flex items-center justify-center transition-colors"
