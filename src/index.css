@@ -238,7 +238,7 @@ span.end { display: none; }
   height: 320px;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(ellipse 80% 100% at 50% -20%, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+  background: radial-gradient(ellipse 90% 120% at 50% -30%, rgba(139, 92, 246, 0.35) 0%, rgba(99, 60, 220, 0.15) 40%, transparent 75%);
 }
 [data-theme="light"] .top-glow {
   background: radial-gradient(ellipse 80% 100% at 50% -20%, rgba(180, 140, 60, 0.12) 0%, transparent 70%);

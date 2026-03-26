@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import lightBgImg from "@/assets/light-bg.png";
+
 
 export default function CosmosBackground() {
   const starsRef = useRef<HTMLDivElement>(null);
@@ -34,17 +34,16 @@ export default function CosmosBackground() {
 
   if (isLight) {
     return (
-      <div className="fixed inset-0 z-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${lightBgImg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
-        />
-        <div className="absolute inset-0" style={{ background: "rgba(235,228,212,0.75)" }} />
+      <div className="fixed inset-0 z-0" style={{
+        background: "linear-gradient(180deg, #EDE7D9 0%, #DDD2B8 35%, #C9B896 65%, #B8A47A 100%)"
+      }}>
+        {/* Warm golden glow at top center */}
+        <div className="absolute pointer-events-none" style={{
+          width: "70%", height: 300,
+          top: -80, left: "15%",
+          background: "radial-gradient(ellipse at center, rgba(210, 180, 120, 0.25) 0%, transparent 70%)",
+          filter: "blur(60px)",
+        }} />
       </div>
     );
   }

@@ -74,10 +74,10 @@ export default function RepeatDialog({ open, onClose, totalAyahs, currentAyah, o
 
         {/* Controls */}
         <div className="p-5 space-y-4">
-          <CounterRow label="من آية" value={fromAyah} onInc={() => inc(fromAyah, setFromAyah, totalAyahs)} onDec={() => dec(fromAyah, setFromAyah, 1)} />
-          <CounterRow label="إلى آية" value={toAyah} onInc={() => inc(toAyah, setToAyah, totalAyahs)} onDec={() => dec(toAyah, setToAyah, 1)} />
-          <CounterRow label="تكرار الآية" value={ayahRepeat} onInc={() => inc(ayahRepeat, setAyahRepeat, 99)} onDec={() => dec(ayahRepeat, setAyahRepeat, 1)} />
-          <CounterRow label="تكرار المقطع" value={sectionRepeat} onInc={() => inc(sectionRepeat, setSectionRepeat, 99)} onDec={() => dec(sectionRepeat, setSectionRepeat, 1)} />
+          <CounterRow label="من آية" value={fromAyah} onInc={() => inc(fromAyah, setFromAyah, totalAyahs)} onDec={() => dec(fromAyah, setFromAyah, 1)} onChange={(v) => setFromAyah(Math.min(Math.max(v, 1), totalAyahs))} />
+          <CounterRow label="إلى آية" value={toAyah} onInc={() => inc(toAyah, setToAyah, totalAyahs)} onDec={() => dec(toAyah, setToAyah, 1)} onChange={(v) => setToAyah(Math.min(Math.max(v, 1), totalAyahs))} />
+          <CounterRow label="تكرار الآية" value={ayahRepeat} onInc={() => inc(ayahRepeat, setAyahRepeat, 99)} onDec={() => dec(ayahRepeat, setAyahRepeat, 1)} onChange={(v) => setAyahRepeat(Math.min(Math.max(v, 1), 99))} />
+          <CounterRow label="تكرار المقطع" value={sectionRepeat} onInc={() => inc(sectionRepeat, setSectionRepeat, 99)} onDec={() => dec(sectionRepeat, setSectionRepeat, 1)} onChange={(v) => setSectionRepeat(Math.min(Math.max(v, 1), 99))} />
         </div>
 
         {/* Footer */}
@@ -102,7 +102,7 @@ export default function RepeatDialog({ open, onClose, totalAyahs, currentAyah, o
   );
 }
 
-function CounterRow({ label, value, onInc, onDec }: { label: string; value: number; onInc: () => void; onDec: () => void }) {
+function CounterRow({ label, value, onInc, onDec, onChange }: { label: string; value: number; onInc: () => void; onDec: () => void; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center justify-between">
       <span className="font-quran text-sm" style={{ color: "var(--text-1)" }}>{label}</span>
@@ -114,12 +114,17 @@ function CounterRow({ label, value, onInc, onDec }: { label: string; value: numb
         >
           <Plus className="w-3.5 h-3.5" style={{ color: "var(--text-1)" }} />
         </button>
-        <div
-          className="w-12 h-9 flex items-center justify-center text-sm font-bold tabular-nums"
-          style={{ background: "var(--glass-thin-bg)", borderTop: "0.5px solid var(--glass-card-border)", borderBottom: "0.5px solid var(--glass-card-border)", color: "var(--text-0)" }}
-        >
-          {value}
-        </div>
+        <input
+          type="number"
+          min={1}
+          value={value}
+          onChange={(e) => {
+            const v = parseInt(e.target.value);
+            if (!isNaN(v)) onChange(v);
+          }}
+          className="w-14 h-9 text-center text-sm font-bold tabular-nums bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ borderTop: "0.5px solid var(--glass-card-border)", borderBottom: "0.5px solid var(--glass-card-border)", background: "var(--glass-thin-bg)", color: "var(--text-0)" }}
+        />
         <button
           onClick={onDec}
           className="w-9 h-9 rounded-r-xl flex items-center justify-center transition-colors"
