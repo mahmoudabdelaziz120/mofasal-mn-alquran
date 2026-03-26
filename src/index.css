@@ -229,6 +229,21 @@ span.end { display: none; }
   transform: rotate(180deg);
 }
 
+/* Top gradient glow */
+.top-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 320px;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 100% at 50% -20%, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+}
+[data-theme="light"] .top-glow {
+  background: radial-gradient(ellipse 80% 100% at 50% -20%, rgba(180, 140, 60, 0.12) 0%, transparent 70%);
+}
+
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar { width: 3px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
