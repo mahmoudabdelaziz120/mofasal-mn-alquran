@@ -74,10 +74,10 @@ export default function RepeatDialog({ open, onClose, totalAyahs, currentAyah, o
 
         {/* Controls */}
         <div className="p-5 space-y-4">
-          <CounterRow label="من آية" value={fromAyah} onInc={() => inc(fromAyah, setFromAyah, totalAyahs)} onDec={() => dec(fromAyah, setFromAyah, 1)} />
-          <CounterRow label="إلى آية" value={toAyah} onInc={() => inc(toAyah, setToAyah, totalAyahs)} onDec={() => dec(toAyah, setToAyah, 1)} />
-          <CounterRow label="تكرار الآية" value={ayahRepeat} onInc={() => inc(ayahRepeat, setAyahRepeat, 99)} onDec={() => dec(ayahRepeat, setAyahRepeat, 1)} />
-          <CounterRow label="تكرار المقطع" value={sectionRepeat} onInc={() => inc(sectionRepeat, setSectionRepeat, 99)} onDec={() => dec(sectionRepeat, setSectionRepeat, 1)} />
+          <CounterRow label="من آية" value={fromAyah} onInc={() => inc(fromAyah, setFromAyah, totalAyahs)} onDec={() => dec(fromAyah, setFromAyah, 1)} onChange={(v) => setFromAyah(Math.min(Math.max(v, 1), totalAyahs))} />
+          <CounterRow label="إلى آية" value={toAyah} onInc={() => inc(toAyah, setToAyah, totalAyahs)} onDec={() => dec(toAyah, setToAyah, 1)} onChange={(v) => setToAyah(Math.min(Math.max(v, 1), totalAyahs))} />
+          <CounterRow label="تكرار الآية" value={ayahRepeat} onInc={() => inc(ayahRepeat, setAyahRepeat, 99)} onDec={() => dec(ayahRepeat, setAyahRepeat, 1)} onChange={(v) => setAyahRepeat(Math.min(Math.max(v, 1), 99))} />
+          <CounterRow label="تكرار المقطع" value={sectionRepeat} onInc={() => inc(sectionRepeat, setSectionRepeat, 99)} onDec={() => dec(sectionRepeat, setSectionRepeat, 1)} onChange={(v) => setSectionRepeat(Math.min(Math.max(v, 1), 99))} />
         </div>
 
         {/* Footer */}
