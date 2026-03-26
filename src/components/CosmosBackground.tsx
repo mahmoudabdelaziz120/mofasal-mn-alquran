@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import lightBgImg from "@/assets/light-bg.png";
+
 
 export default function CosmosBackground() {
   const starsRef = useRef<HTMLDivElement>(null);
