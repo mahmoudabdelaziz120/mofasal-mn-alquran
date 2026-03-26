@@ -102,7 +102,7 @@ export default function RepeatDialog({ open, onClose, totalAyahs, currentAyah, o
   );
 }
 
-function CounterRow({ label, value, onInc, onDec }: { label: string; value: number; onInc: () => void; onDec: () => void }) {
+function CounterRow({ label, value, onInc, onDec, onChange }: { label: string; value: number; onInc: () => void; onDec: () => void; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center justify-between">
       <span className="font-quran text-sm" style={{ color: "var(--text-1)" }}>{label}</span>
@@ -120,7 +120,7 @@ function CounterRow({ label, value, onInc, onDec }: { label: string; value: numb
           value={value}
           onChange={(e) => {
             const v = parseInt(e.target.value);
-            if (!isNaN(v) && v >= 1) onInc(); // trigger parent update via onChange prop
+            if (!isNaN(v)) onChange(v);
           }}
           className="w-14 h-9 text-center text-sm font-bold tabular-nums bg-transparent outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           style={{ borderTop: "0.5px solid var(--glass-card-border)", borderBottom: "0.5px solid var(--glass-card-border)", background: "var(--glass-thin-bg)", color: "var(--text-0)" }}
