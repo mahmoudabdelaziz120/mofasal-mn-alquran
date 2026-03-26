@@ -4,6 +4,7 @@ import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RU
 import { parseTajweedText, extractTajweedOccurrences } from "@/lib/tajweedParser";
 import CosmosBackground from "@/components/CosmosBackground";
 import ThemeToggle from "@/components/ThemeToggle";
+import RepeatDialog, { RepeatConfig } from "@/components/RepeatDialog";
 import { Play, Pause, SkipBack, SkipForward, Repeat, PanelRightClose, PanelRightOpen } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
@@ -24,7 +25,6 @@ function useIsDarkMode() {
   return dark;
 }
 
-// Tajweed rule descriptions
 const RULE_DESCRIPTIONS: Record<string, string> = {
   h: "همزة الوصل — تُحذف وصلاً",
   s: "حرف ساكن لا يُلفظ",
@@ -62,6 +62,12 @@ export default function SurahReader() {
   const [curTime, setCurTime] = useState("0:00");
   const [durTime, setDurTime] = useState("0:00");
   const [showRules, setShowRules] = useState(true);
+  const [showRepeatDialog, setShowRepeatDialog] = useState(false);
+
+  // Repeat loop state
+  const repeatConfigRef = useRef<RepeatConfig | null>(null);
+  const repeatAyahCountRef = useRef(0);
+  const repeatSectionCountRef = useRef(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mushafRef = useRef<HTMLDivElement>(null);
@@ -119,9 +125,42 @@ export default function SurahReader() {
     };
     const onDurationChange = () => setDurTime(fmt(audio.duration));
     const onEnded = () => {
-      if (repeatMode) { audio.play().catch(() => {}); }
-      else if (curIdx < ayahs.length - 1) loadAyaDirect(curIdx + 1, true, reciter);
-      else setIsPlaying(false);
+      const cfg = repeatConfigRef.current;
+      if (cfg) {
+        // Repeat loop mode
+        repeatAyahCountRef.current++;
+        if (repeatAyahCountRef.current < cfg.ayahRepeat) {
+          // Repeat same ayah
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          // Move to next ayah in range
+          repeatAyahCountRef.current = 0;
+          const nextAyahNum = ayahs[curIdx]?.num + 1;
+          if (nextAyahNum && nextAyahNum <= cfg.toAyah) {
+            const nextIdx = ayahs.findIndex(a => a.num === nextAyahNum);
+            if (nextIdx >= 0) { loadAyaDirect(nextIdx, true, reciter); return; }
+          }
+          // End of section, check section repeat
+          repeatSectionCountRef.current++;
+          if (repeatSectionCountRef.current < cfg.sectionRepeat) {
+            const startIdx = ayahs.findIndex(a => a.num === cfg.fromAyah);
+            if (startIdx >= 0) { loadAyaDirect(startIdx, true, reciter); return; }
+          }
+          // Done repeating
+          repeatConfigRef.current = null;
+          repeatAyahCountRef.current = 0;
+          repeatSectionCountRef.current = 0;
+          setIsPlaying(false);
+        }
+      } else if (repeatMode) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (curIdx < ayahs.length - 1) {
+        loadAyaDirect(curIdx + 1, true, reciter);
+      } else {
+        setIsPlaying(false);
+      }
     };
     const onError = () => { clearTimeout(timeoutRef.current!); setIsPlaying(false); };
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -140,12 +179,11 @@ export default function SurahReader() {
     return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, []);
 
-  // Auto-reload audio when reciter changes OR when curIdx changes (keep playing state)
+  // Auto-reload audio when reciter or ayah changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || ayahs.length === 0) return;
     const wasPlaying = isPlayingRef.current;
-    // Always update audio source to match current ayah & reciter
     const newSrc = ayaUrl(surahNum, ayahs[curIdx]?.num || 1, reciter);
     if (audio.src !== newSrc) {
       loadAyaDirect(curIdx, wasPlaying, reciter);
@@ -183,10 +221,8 @@ export default function SurahReader() {
     [ayahs, reciter, surahNum] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  // Select ayah (show rules) without playing audio
   const selectAyah = (idx: number) => {
     setCurIdx(idx);
-    // Scroll to it
     const el = document.getElementById(`aw-${idx}`);
     if (el && mushafRef.current) {
       const pane = mushafRef.current;
@@ -219,6 +255,17 @@ export default function SurahReader() {
     audio.currentTime = pct * audio.duration;
   };
 
+  const handleRepeatStart = (config: RepeatConfig) => {
+    setShowRepeatDialog(false);
+    repeatConfigRef.current = config;
+    repeatAyahCountRef.current = 0;
+    repeatSectionCountRef.current = 0;
+    const startIdx = ayahs.findIndex(a => a.num === config.fromAyah);
+    if (startIdx >= 0) {
+      loadAyaDirect(startIdx, true, reciter);
+    }
+  };
+
   // Scroll to active ayah when playing
   useEffect(() => {
     if (!isPlaying) return;
@@ -233,7 +280,6 @@ export default function SurahReader() {
     }
   }, [curIdx, isPlaying]);
 
-  // Extract tajweed occurrences with full context
   const ruleOccurrences = useMemo(() => {
     if (!ayahs[curIdx]) return [];
     return extractTajweedOccurrences(ayahs[curIdx].text);
@@ -255,6 +301,13 @@ export default function SurahReader() {
   return (
     <div className="relative h-[100dvh] flex flex-col" dir="rtl">
       <CosmosBackground />
+      <RepeatDialog
+        open={showRepeatDialog}
+        onClose={() => setShowRepeatDialog(false)}
+        totalAyahs={ayahs.length}
+        currentAyah={ayahs[curIdx]?.num || 1}
+        onStart={handleRepeatStart}
+      />
       <div className="relative z-10 flex flex-col h-full">
         {/* Header */}
         <div
@@ -268,7 +321,6 @@ export default function SurahReader() {
           <div className="px-3 sm:px-4 py-2 sm:py-2.5">
             <div className="flex items-center justify-between mb-1.5 sm:mb-2">
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Logo */}
                 <button onClick={() => navigate("/")} className="flex-shrink-0">
                   <img src={logoImg} alt="الرئيسية" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover" />
                 </button>
@@ -286,7 +338,6 @@ export default function SurahReader() {
                 <ThemeToggle />
               </div>
             </div>
-            {/* Reciter + Surah selectors */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[0.625rem] sm:text-[0.6875rem]" style={{ color: "var(--text-2)" }}>القارئ:</span>
               <select
@@ -331,7 +382,15 @@ export default function SurahReader() {
                 <button onClick={() => curIdx < ayahs.length - 1 && loadAya(curIdx + 1, isPlaying)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}>
                   <SkipBack className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
-                <button onClick={() => setRepeatMode(!repeatMode)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: repeatMode ? "var(--highlight-bg)" : "var(--glass-card-bg)", border: `0.5px solid ${repeatMode ? "var(--highlight-border)" : "var(--glass-card-border)"}`, color: repeatMode ? "var(--dot-active)" : "var(--text-1)" }}>
+                <button
+                  onClick={() => setShowRepeatDialog(true)}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
+                  style={{
+                    background: repeatConfigRef.current ? "var(--highlight-bg)" : "var(--glass-card-bg)",
+                    border: `0.5px solid ${repeatConfigRef.current ? "var(--highlight-border)" : "var(--glass-card-border)"}`,
+                    color: repeatConfigRef.current ? "var(--dot-active)" : "var(--text-1)",
+                  }}
+                >
                   <Repeat className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
               </div>
@@ -415,7 +474,6 @@ export default function SurahReader() {
                 أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
               </div>
 
-              {/* Active ayah preview */}
               {ayahs[curIdx] && (
                 <div
                   className="font-quran text-xs sm:text-sm leading-[2] p-2.5 rounded-xl mb-3 text-right"
@@ -447,14 +505,12 @@ export default function SurahReader() {
                         animation: "fadeSlideUp 0.2s ease",
                       }}
                     >
-                      {/* Rule header: dot + name */}
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
                         <span className="text-[0.75rem] sm:text-sm font-bold" style={{ color }}>
                           {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                         </span>
                       </div>
-                      {/* Context word as badge */}
                       <div className="mt-1.5 mb-1.5">
                         <span
                           className="font-quran text-[0.8125rem] sm:text-sm px-2.5 py-1 rounded-lg inline-block"
@@ -467,7 +523,6 @@ export default function SurahReader() {
                           {occ.context}
                         </span>
                       </div>
-                      {/* Description */}
                       <p className="text-[0.6rem] sm:text-[0.6875rem] mt-1" style={{ color: "var(--text-2)" }}>
                         {RULE_DESCRIPTIONS[occ.code] || ""}
                       </p>

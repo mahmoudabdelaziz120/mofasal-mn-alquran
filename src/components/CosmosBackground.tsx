@@ -34,16 +34,16 @@ export default function CosmosBackground() {
 
   if (isLight) {
     return (
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: `url(${lightBgImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        {/* Subtle overlay to ensure readability */}
+      <div className="fixed inset-0 z-0">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${lightBgImg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
         <div className="absolute inset-0" style={{ background: "rgba(235,228,212,0.75)" }} />
       </div>
     );

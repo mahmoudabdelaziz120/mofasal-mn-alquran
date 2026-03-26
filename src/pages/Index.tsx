@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SURAHS, SURAH_CATEGORIES, numToArabic } from "@/data/surahs";
 import CosmosBackground from "@/components/CosmosBackground";
@@ -7,7 +7,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { Search, ChevronDown, BookOpen } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 
-// Main sections for the app
 const MAIN_SECTIONS = [
   {
     id: "tafsir",
@@ -18,11 +17,42 @@ const MAIN_SECTIONS = [
   },
 ];
 
+// Scroll reveal hook
+function useScrollReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) { el.style.opacity = "1"; el.style.transform = "none"; return; }
+
+    el.style.opacity = "0";
+    el.style.transform = "translateY(16px)";
+    el.style.transition = "opacity 0.6s ease-out, transform 0.6s ease-out";
+
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        el.style.opacity = "1";
+        el.style.transform = "translateY(0)";
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
 export default function Index() {
   const [search, setSearch] = useState("");
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
   const [showSurahSection, setShowSurahSection] = useState(false);
   const navigate = useNavigate();
+
+  const heroRef = useScrollReveal();
+  const searchRef = useScrollReveal();
+  const surahsRef = useScrollReveal();
+  const sectionsRef = useScrollReveal();
 
   const filtered = useMemo(() => {
     if (!search.trim()) return null;
@@ -46,25 +76,24 @@ export default function Index() {
     <div className="relative min-h-screen" dir="rtl">
       <CosmosBackground />
 
+      {/* Top gradient glow */}
+      <div className="top-glow" />
+
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header: logo + theme toggle */}
+        {/* Header */}
         <div className="flex justify-between items-center px-4 pt-4">
           <img src={logoImg} alt="المفصل من القرآن" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover" />
           <ThemeToggle />
         </div>
 
-        {/* Hero — Dedication */}
-        <header className="text-center pt-6 sm:pt-8 pb-6 sm:pb-10 px-4">
+        {/* Hero */}
+        <header ref={heroRef} className="text-center pt-6 sm:pt-8 pb-6 sm:pb-10 px-4">
           <p className="font-quran text-base sm:text-lg mb-3" style={{ color: "var(--text-2)" }}>
             بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
           </p>
           <h1
             className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 leading-relaxed max-w-2xl mx-auto"
-            style={{
-              color: "var(--text-0)",
-              fontFamily: "'Amiri', serif",
-              lineHeight: 2,
-            }}
+            style={{ color: "var(--text-0)", fontFamily: "'Amiri', serif", lineHeight: 2 }}
           >
             هذا الموقع صدقة جارية لروح أمي
             <br />
@@ -73,7 +102,7 @@ export default function Index() {
         </header>
 
         {/* Search */}
-        <div className="px-4 max-w-2xl mx-auto w-full mb-6 sm:mb-8">
+        <div ref={searchRef} className="px-4 max-w-2xl mx-auto w-full mb-6 sm:mb-8">
           <div
             className="flex items-center gap-3 px-4 py-3 rounded-2xl"
             style={{
@@ -113,42 +142,8 @@ export default function Index() {
           </section>
         ) : (
           <section className="px-4 max-w-5xl mx-auto w-full pb-16 space-y-6">
-            {/* Main Sections */}
-            <div>
-              <h2 className="font-quran text-sm sm:text-base font-bold mb-3 px-1" style={{ color: "var(--text-1)" }}>
-                الأقسام الرئيسية
-              </h2>
-              <div className="space-y-2">
-                {MAIN_SECTIONS.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => navigate(section.route)}
-                    className="w-full flex items-center gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-right transition-all duration-200 glass-card-themed group"
-                  >
-                    <div
-                      className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                      style={{ background: "var(--highlight-bg)" }}
-                    >
-                      {section.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
-                        {section.title}
-                      </div>
-                      <div className="text-[0.65rem] sm:text-xs" style={{ color: "var(--text-2)" }}>
-                        {section.desc}
-                      </div>
-                    </div>
-                    <svg className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity flex-shrink-0 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Surahs — Collapsible outer accordion */}
-            <div>
+            {/* Surahs — Collapsible with "عرض الكل" */}
+            <div ref={surahsRef}>
               <button
                 onClick={() => setShowSurahSection(!showSurahSection)}
                 className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl text-right transition-all duration-200 glass-card-themed mb-2"
@@ -169,10 +164,15 @@ export default function Index() {
                     </div>
                   </div>
                 </div>
-                <ChevronDown
-                  className={`w-5 h-5 accordion-arrow ${showSurahSection ? "rotated" : ""}`}
-                  style={{ color: "var(--text-2)" }}
-                />
+                <div className="flex items-center gap-2">
+                  <span className="text-[0.65rem] sm:text-xs font-medium" style={{ color: "var(--dot-active)" }}>
+                    {showSurahSection ? "إخفاء" : "عرض الكل"}
+                  </span>
+                  <ChevronDown
+                    className={`w-5 h-5 accordion-arrow ${showSurahSection ? "rotated" : ""}`}
+                    style={{ color: "var(--text-2)" }}
+                  />
+                </div>
               </button>
 
               <div className={`accordion-content ${showSurahSection ? "expanded" : ""}`}>
@@ -193,9 +193,7 @@ export default function Index() {
                         <button
                           onClick={() => toggleCat(cat.id)}
                           className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3 sm:py-4 text-right transition-colors duration-200"
-                          style={{
-                            background: isExpanded ? "var(--highlight-bg)" : "transparent",
-                          }}
+                          style={{ background: isExpanded ? "var(--highlight-bg)" : "transparent" }}
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div
@@ -218,10 +216,7 @@ export default function Index() {
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <span
                               className="text-[0.6rem] sm:text-[0.65rem] px-2 sm:px-2.5 py-1 rounded-lg"
-                              style={{
-                                background: "var(--category-badge-bg)",
-                                color: "var(--category-badge-color)",
-                              }}
+                              style={{ background: "var(--category-badge-bg)", color: "var(--category-badge-color)" }}
                             >
                               {cat.badgeText}
                             </span>
@@ -245,6 +240,41 @@ export default function Index() {
                     );
                   })}
                 </div>
+              </div>
+            </div>
+
+            {/* Main Sections — visible and open */}
+            <div ref={sectionsRef}>
+              <h2 className="font-quran text-sm sm:text-base font-bold mb-3 px-1 flex items-center gap-2" style={{ color: "var(--text-1)" }}>
+                <span>الأقسام الرئيسية</span>
+                <span className="text-[0.6rem]" style={{ color: "var(--text-2)" }}>موسوعتك القرآنية الشاملة</span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {MAIN_SECTIONS.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => navigate(section.route)}
+                    className="w-full flex items-center gap-3 px-4 sm:px-5 py-4 sm:py-5 rounded-2xl text-right transition-all duration-200 glass-card-themed group hover:scale-[1.01]"
+                  >
+                    <div
+                      className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
+                      style={{ background: "var(--highlight-bg)" }}
+                    >
+                      {section.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-quran text-sm sm:text-base font-bold" style={{ color: "var(--text-0)" }}>
+                        {section.title}
+                      </div>
+                      <div className="text-[0.65rem] sm:text-xs" style={{ color: "var(--text-2)" }}>
+                        {section.desc}
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity flex-shrink-0 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                ))}
               </div>
             </div>
           </section>
