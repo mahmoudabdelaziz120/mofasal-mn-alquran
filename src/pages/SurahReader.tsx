@@ -433,14 +433,13 @@ export default function SurahReader() {
           </div>
         </div>
 
-        {/* Main content */}
+        {/* Main content — resizable */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Mushaf pane */}
           <div
             ref={mushafRef}
             className="flex-1 overflow-y-auto px-4 sm:px-7 py-3 sm:py-4 pb-8 sm:pb-10 custom-scrollbar"
             style={{
-              borderLeft: showRules ? "0.5px solid var(--glass-thin-border)" : "none",
               background: isDark ? "transparent" : "var(--mushaf-bg, transparent)",
             }}
           >
