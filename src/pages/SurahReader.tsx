@@ -63,6 +63,7 @@ export default function SurahReader() {
   const [durTime, setDurTime] = useState("0:00");
   const [showRules, setShowRules] = useState(true);
   const [showRepeatDialog, setShowRepeatDialog] = useState(false);
+  const [rulesWidth, setRulesWidth] = useState(280);
 
   // Repeat loop state
   const repeatConfigRef = useRef<RepeatConfig | null>(null);
