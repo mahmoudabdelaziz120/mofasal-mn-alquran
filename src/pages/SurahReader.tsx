@@ -369,8 +369,29 @@ export default function SurahReader() {
           {/* Player bar */}
           <div className="px-3 sm:px-4 py-2 sm:py-2.5" style={{ background: "var(--glass-thin-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}>
             <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-              <div className="flex-1 font-quran text-[0.6875rem] sm:text-[0.8125rem] truncate" style={{ color: "var(--text-2)" }}>
-                {ayahs[curIdx] ? `الآية ${numToArabic(ayahs[curIdx].num)}` : "اضغط ▶ للبدء"}
+              <div className="flex items-center gap-1.5 flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
+                <span className="text-[0.625rem] sm:text-[0.6875rem]">الآية</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={ayahs.length}
+                  value={ayahs[curIdx]?.num || 1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 1 && val <= ayahs.length) {
+                      const idx = ayahs.findIndex(a => a.num === val);
+                      if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
+                    }
+                  }}
+                  className="w-10 sm:w-12 text-center text-[0.75rem] sm:text-[0.8125rem] font-quran rounded-lg outline-none bg-transparent"
+                  style={{
+                    background: "var(--glass-card-bg)",
+                    border: "0.5px solid var(--glass-card-border)",
+                    color: "var(--text-0)",
+                    padding: "2px 4px",
+                  }}
+                />
+                <span className="text-[0.5625rem] sm:text-[0.625rem]">من {numToArabic(ayahs.length)}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
                 <button onClick={() => curIdx > 0 && loadAya(curIdx - 1, isPlaying)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}>
