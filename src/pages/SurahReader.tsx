@@ -484,11 +484,46 @@ export default function SurahReader() {
             )}
           </div>
 
+          {/* Resizable divider */}
+          {showRules && (
+            <div
+              className="w-[3px] sm:w-[4px] cursor-col-resize flex-shrink-0 group relative hover:bg-[var(--dot-active)] transition-colors"
+              style={{ background: "var(--glass-thin-border)" }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startW = rulesWidth;
+                const onMove = (ev: MouseEvent) => {
+                  const diff = startX - ev.clientX;
+                  const newW = Math.max(160, Math.min(500, startW + diff));
+                  setRulesWidth(newW);
+                };
+                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+                document.addEventListener("mousemove", onMove);
+                document.addEventListener("mouseup", onUp);
+              }}
+              onTouchStart={(e) => {
+                const startX = e.touches[0].clientX;
+                const startW = rulesWidth;
+                const onMove = (ev: TouchEvent) => {
+                  const diff = startX - ev.touches[0].clientX;
+                  const newW = Math.max(160, Math.min(500, startW + diff));
+                  setRulesWidth(newW);
+                };
+                const onUp = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onUp); };
+                document.addEventListener("touchmove", onMove);
+                document.addEventListener("touchend", onUp);
+              }}
+            >
+              <div className="absolute inset-y-0 -left-1 -right-1" />
+            </div>
+          )}
+
           {/* Rules pane */}
           {showRules && (
             <div
-              className="w-[200px] sm:w-[240px] md:w-[280px] lg:w-[310px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
-              style={{ background: "var(--rules-pane-bg)" }}
+              className="flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
+              style={{ background: "var(--rules-pane-bg)", width: rulesWidth }}
             >
               <div className="text-[0.5625rem] sm:text-[0.625rem] uppercase tracking-widest mb-2 sm:mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
