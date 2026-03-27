@@ -63,6 +63,7 @@ export default function SurahReader() {
   const [durTime, setDurTime] = useState("0:00");
   const [showRules, setShowRules] = useState(true);
   const [showRepeatDialog, setShowRepeatDialog] = useState(false);
+  const [rulesWidth, setRulesWidth] = useState(280);
 
   // Repeat loop state
   const repeatConfigRef = useRef<RepeatConfig | null>(null);
@@ -369,8 +370,29 @@ export default function SurahReader() {
           {/* Player bar */}
           <div className="px-3 sm:px-4 py-2 sm:py-2.5" style={{ background: "var(--glass-thin-bg)", borderTop: "0.5px solid var(--glass-thin-border)" }}>
             <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
-              <div className="flex-1 font-quran text-[0.6875rem] sm:text-[0.8125rem] truncate" style={{ color: "var(--text-2)" }}>
-                {ayahs[curIdx] ? `الآية ${numToArabic(ayahs[curIdx].num)}` : "اضغط ▶ للبدء"}
+              <div className="flex items-center gap-1.5 flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
+                <span className="text-[0.625rem] sm:text-[0.6875rem]">الآية</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={ayahs.length}
+                  value={ayahs[curIdx]?.num || 1}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 1 && val <= ayahs.length) {
+                      const idx = ayahs.findIndex(a => a.num === val);
+                      if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
+                    }
+                  }}
+                  className="w-10 sm:w-12 text-center text-[0.75rem] sm:text-[0.8125rem] font-quran rounded-lg outline-none bg-transparent"
+                  style={{
+                    background: "var(--glass-card-bg)",
+                    border: "0.5px solid var(--glass-card-border)",
+                    color: "var(--text-0)",
+                    padding: "2px 4px",
+                  }}
+                />
+                <span className="text-[0.5625rem] sm:text-[0.625rem]">من {numToArabic(ayahs.length)}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
                 <button onClick={() => curIdx > 0 && loadAya(curIdx - 1, isPlaying)} className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center" style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-card-border)", color: "var(--text-1)" }}>
@@ -412,14 +434,13 @@ export default function SurahReader() {
           </div>
         </div>
 
-        {/* Main content */}
+        {/* Main content — resizable */}
         <div className="flex flex-1 overflow-hidden min-h-0">
           {/* Mushaf pane */}
           <div
             ref={mushafRef}
             className="flex-1 overflow-y-auto px-4 sm:px-7 py-3 sm:py-4 pb-8 sm:pb-10 custom-scrollbar"
             style={{
-              borderLeft: showRules ? "0.5px solid var(--glass-thin-border)" : "none",
               background: isDark ? "transparent" : "var(--mushaf-bg, transparent)",
             }}
           >
@@ -464,11 +485,46 @@ export default function SurahReader() {
             )}
           </div>
 
+          {/* Resizable divider */}
+          {showRules && (
+            <div
+              className="w-[3px] sm:w-[4px] cursor-col-resize flex-shrink-0 group relative hover:bg-[var(--dot-active)] transition-colors"
+              style={{ background: "var(--glass-thin-border)" }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startW = rulesWidth;
+                const onMove = (ev: MouseEvent) => {
+                  const diff = startX - ev.clientX;
+                  const newW = Math.max(160, Math.min(500, startW + diff));
+                  setRulesWidth(newW);
+                };
+                const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+                document.addEventListener("mousemove", onMove);
+                document.addEventListener("mouseup", onUp);
+              }}
+              onTouchStart={(e) => {
+                const startX = e.touches[0].clientX;
+                const startW = rulesWidth;
+                const onMove = (ev: TouchEvent) => {
+                  const diff = startX - ev.touches[0].clientX;
+                  const newW = Math.max(160, Math.min(500, startW + diff));
+                  setRulesWidth(newW);
+                };
+                const onUp = () => { document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onUp); };
+                document.addEventListener("touchmove", onMove);
+                document.addEventListener("touchend", onUp);
+              }}
+            >
+              <div className="absolute inset-y-0 -left-1 -right-1" />
+            </div>
+          )}
+
           {/* Rules pane */}
           {showRules && (
             <div
-              className="w-[200px] sm:w-[240px] md:w-[280px] lg:w-[310px] flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
-              style={{ background: "var(--rules-pane-bg)" }}
+              className="flex-shrink-0 overflow-y-auto p-2.5 sm:p-3.5 custom-scrollbar"
+              style={{ background: "var(--rules-pane-bg)", width: rulesWidth }}
             >
               <div className="text-[0.5625rem] sm:text-[0.625rem] uppercase tracking-widest mb-2 sm:mb-2.5 pb-1.5" style={{ color: "var(--text-3)", borderBottom: "0.5px solid var(--glass-thin-border)" }}>
                 أحكام التجويد — الآية {ayahs[curIdx] ? numToArabic(ayahs[curIdx].num) : ""}
@@ -501,29 +557,42 @@ export default function SurahReader() {
                         background: "var(--rule-card-bg)",
                         border: "0.5px solid var(--rule-card-border)",
                         boxShadow: "var(--rule-card-shadow)",
-                        borderRight: `3px solid ${color}`,
                         animation: "fadeSlideUp 0.2s ease",
                       }}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
+                      {/* Rule name */}
+                      <div className="flex items-center gap-2 mb-2">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        <span className="text-[0.75rem] sm:text-sm font-bold" style={{ color }}>
+                        <span className="text-[0.8125rem] sm:text-[0.875rem] font-bold" style={{ color }}>
                           {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                         </span>
                       </div>
-                      <div className="mt-1.5 mb-1.5">
-                        <span
-                          className="font-quran text-[0.8125rem] sm:text-sm px-2.5 py-1 rounded-lg inline-block"
-                          style={{
-                            background: `${color}1A`,
-                            color: color,
-                            border: `0.5px solid ${color}33`,
-                          }}
-                        >
-                          {occ.context}
-                        </span>
+                      {/* Context with highlighted word */}
+                      <div
+                        className="font-quran text-[0.875rem] sm:text-[0.9375rem] leading-[2.2] text-center py-2 px-2 rounded-lg mb-2"
+                        style={{
+                          background: "var(--glass-card-bg)",
+                          border: "0.5px solid var(--glass-card-border)",
+                          color: "var(--quran-text)",
+                        }}
+                      >
+                        {(() => {
+                          const ctx = occ.context;
+                          const wordIdx = ctx.indexOf(occ.word);
+                          if (wordIdx === -1) return <span style={{ color }}>{ctx}</span>;
+                          const before = ctx.slice(0, wordIdx);
+                          const after = ctx.slice(wordIdx + occ.word.length);
+                          return (
+                            <>
+                              {before && <span>{before}</span>}
+                              <span style={{ color, fontWeight: "bold" }}>{occ.word}</span>
+                              {after && <span>{after}</span>}
+                            </>
+                          );
+                        })()}
                       </div>
-                      <p className="text-[0.6rem] sm:text-[0.6875rem] mt-1" style={{ color: "var(--text-2)" }}>
+                      {/* Description */}
+                      <p className="text-[0.65rem] sm:text-[0.6875rem] text-center" style={{ color: "var(--text-2)" }}>
                         {RULE_DESCRIPTIONS[occ.code] || ""}
                       </p>
                     </div>
