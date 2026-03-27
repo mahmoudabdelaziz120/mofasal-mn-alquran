@@ -251,3 +251,16 @@ span.end { display: none; }
 
 [data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(128,101,23,0.2); }
 [data-theme="light"] .custom-scrollbar { scrollbar-color: rgba(128,101,23,0.2) transparent; }
+
+/* Descending sky shimmer for light mode */
+@keyframes skyShimmer {
+  0% { opacity: 0.6; transform: translateY(-10px); }
+  50% { opacity: 1; transform: translateY(10px); }
+  100% { opacity: 0.6; transform: translateY(-10px); }
+}
+.sky-shimmer {
+  animation: skyShimmer 25s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sky-shimmer { animation: none; }
+}

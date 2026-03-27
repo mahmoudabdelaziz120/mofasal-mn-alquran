@@ -35,14 +35,18 @@ export default function CosmosBackground() {
   if (isLight) {
     return (
       <div className="fixed inset-0 z-0" style={{
-        background: "linear-gradient(180deg, #EDE7D9 0%, #DDD2B8 35%, #C9B896 65%, #B8A47A 100%)"
+        background: "linear-gradient(180deg, #EDE7D9 0%, #E3D9C5 30%, #D4C4A0 60%, #B8A47A 100%)"
       }}>
-        {/* Warm golden glow at top center */}
+        {/* Golden glow at top center */}
         <div className="absolute pointer-events-none" style={{
-          width: "70%", height: 300,
-          top: -80, left: "15%",
-          background: "radial-gradient(ellipse at center, rgba(210, 180, 120, 0.25) 0%, transparent 70%)",
-          filter: "blur(60px)",
+          width: "80%", height: 350,
+          top: -100, left: "10%",
+          background: "radial-gradient(ellipse at center, rgba(210, 180, 100, 0.22) 0%, transparent 65%)",
+          filter: "blur(80px)",
+        }} />
+        {/* Descending sky shimmer */}
+        <div className="absolute inset-0 pointer-events-none sky-shimmer" style={{
+          background: "linear-gradient(180deg, rgba(220, 195, 130, 0.10) 0%, rgba(200, 170, 100, 0.04) 40%, transparent 70%)",
         }} />
       </div>
     );

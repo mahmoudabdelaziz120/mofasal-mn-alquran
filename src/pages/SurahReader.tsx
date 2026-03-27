@@ -557,29 +557,42 @@ export default function SurahReader() {
                         background: "var(--rule-card-bg)",
                         border: "0.5px solid var(--rule-card-border)",
                         boxShadow: "var(--rule-card-shadow)",
-                        borderRight: `3px solid ${color}`,
                         animation: "fadeSlideUp 0.2s ease",
                       }}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
+                      {/* Rule name */}
+                      <div className="flex items-center gap-2 mb-2">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        <span className="text-[0.75rem] sm:text-sm font-bold" style={{ color }}>
+                        <span className="text-[0.8125rem] sm:text-[0.875rem] font-bold" style={{ color }}>
                           {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                         </span>
                       </div>
-                      <div className="mt-1.5 mb-1.5">
-                        <span
-                          className="font-quran text-[0.8125rem] sm:text-sm px-2.5 py-1 rounded-lg inline-block"
-                          style={{
-                            background: `${color}1A`,
-                            color: color,
-                            border: `0.5px solid ${color}33`,
-                          }}
-                        >
-                          {occ.context}
-                        </span>
+                      {/* Context with highlighted word */}
+                      <div
+                        className="font-quran text-[0.875rem] sm:text-[0.9375rem] leading-[2.2] text-center py-2 px-2 rounded-lg mb-2"
+                        style={{
+                          background: "var(--glass-card-bg)",
+                          border: "0.5px solid var(--glass-card-border)",
+                          color: "var(--quran-text)",
+                        }}
+                      >
+                        {(() => {
+                          const ctx = occ.context;
+                          const wordIdx = ctx.indexOf(occ.word);
+                          if (wordIdx === -1) return <span style={{ color }}>{ctx}</span>;
+                          const before = ctx.slice(0, wordIdx);
+                          const after = ctx.slice(wordIdx + occ.word.length);
+                          return (
+                            <>
+                              {before && <span>{before}</span>}
+                              <span style={{ color, fontWeight: "bold" }}>{occ.word}</span>
+                              {after && <span>{after}</span>}
+                            </>
+                          );
+                        })()}
                       </div>
-                      <p className="text-[0.6rem] sm:text-[0.6875rem] mt-1" style={{ color: "var(--text-2)" }}>
+                      {/* Description */}
+                      <p className="text-[0.65rem] sm:text-[0.6875rem] text-center" style={{ color: "var(--text-2)" }}>
                         {RULE_DESCRIPTIONS[occ.code] || ""}
                       </p>
                     </div>
