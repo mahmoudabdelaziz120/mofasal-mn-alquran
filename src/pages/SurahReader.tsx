@@ -372,26 +372,22 @@ export default function SurahReader() {
             <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div className="flex items-center gap-1.5 flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
                 <span className="text-[0.625rem] sm:text-[0.6875rem]">الآية</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={ayahs.length}
+                <select
                   value={ayahs[curIdx]?.num || 1}
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 1 && val <= ayahs.length) {
-                      const idx = ayahs.findIndex(a => a.num === val);
-                      if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
-                    }
+                    const idx = ayahs.findIndex(a => a.num === val);
+                    if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
                   }}
-                  className="w-10 sm:w-12 text-center text-[0.75rem] sm:text-[0.8125rem] font-quran rounded-lg outline-none bg-transparent"
-                  style={{
-                    background: "var(--glass-card-bg)",
-                    border: "0.5px solid var(--glass-card-border)",
-                    color: "var(--text-0)",
-                    padding: "2px 4px",
-                  }}
-                />
+                  className="text-[0.6875rem] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg outline-none cursor-pointer font-quran"
+                  style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-thin-border)", color: "var(--text-0)" }}
+                >
+                  {ayahs.map((a) => (
+                    <option key={a.num} value={a.num} style={{ background: "var(--select-option-bg)", color: "var(--text-0)" }}>
+                      {numToArabic(a.num)}
+                    </option>
+                  ))}
+                </select>
                 <span className="text-[0.5625rem] sm:text-[0.625rem]">من {numToArabic(ayahs.length)}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
@@ -469,15 +465,20 @@ export default function SurahReader() {
                   >
                     {parseTajweedText(aya.text, isDark)}
                     <span
-                      className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[0.5625rem] sm:text-[0.6875rem] mx-[2px] sm:mx-[3px] align-middle"
+                      className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 mx-[2px] sm:mx-[3px] align-middle"
                       style={{
-                        background: "var(--ayah-num-bg)",
-                        border: "0.5px solid var(--ayah-num-border)",
-                        color: "var(--text-3)",
+                        color: isDark ? "var(--dot-active)" : "#6B4C1E",
                         fontFamily: "system-ui",
+                        fontSize: "0.625rem",
+                        fontWeight: 700,
+                        position: "relative",
                       }}
                     >
-                      {numToArabic(aya.num)}
+                      <svg viewBox="0 0 40 40" className="absolute inset-0 w-full h-full" style={{ color: isDark ? "var(--dot-active)" : "#B8935A" }}>
+                        <path d="M20 2 L26 8 L38 10 L30 18 L32 30 L20 25 L8 30 L10 18 L2 10 L14 8 Z" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.7" />
+                        <circle cx="20" cy="17" r="11" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+                      </svg>
+                      <span className="relative z-10">{numToArabic(aya.num)}</span>
                     </span>
                   </span>
                 ))}
@@ -495,7 +496,7 @@ export default function SurahReader() {
                 const startX = e.clientX;
                 const startW = rulesWidth;
                 const onMove = (ev: MouseEvent) => {
-                  const diff = startX - ev.clientX;
+                  const diff = ev.clientX - startX;
                   const newW = Math.max(160, Math.min(500, startW + diff));
                   setRulesWidth(newW);
                 };
@@ -507,7 +508,7 @@ export default function SurahReader() {
                 const startX = e.touches[0].clientX;
                 const startW = rulesWidth;
                 const onMove = (ev: TouchEvent) => {
-                  const diff = startX - ev.touches[0].clientX;
+                  const diff = ev.touches[0].clientX - startX;
                   const newW = Math.max(160, Math.min(500, startW + diff));
                   setRulesWidth(newW);
                 };
@@ -596,17 +597,24 @@ export default function SurahReader() {
                             <span className="text-[0.8125rem] sm:text-[0.875rem] font-bold block mb-1.5" style={{ color }}>
                               {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                             </span>
-                            {/* Word in colored badge */}
-                            <div
-                              className="font-quran text-[0.9375rem] sm:text-[1rem] leading-[2] inline-block px-3 py-1 rounded-lg mb-1.5"
-                              style={{
-                                color,
-                                background: `${color}1A`,
-                                border: `0.5px solid ${color}33`,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {occ.context}
+                            {/* Context with highlighted word */}
+                            <div className="font-quran text-[0.9375rem] sm:text-[1rem] leading-[2] mb-1.5" dir="rtl">
+                              {(() => {
+                                const ctx = occ.context;
+                                const wordIdx = ctx.indexOf(occ.word);
+                                if (wordIdx === -1) {
+                                  return <span style={{ color, background: `${color}1A`, border: `0.5px solid ${color}33`, borderRadius: "0.5rem", padding: "2px 10px", fontWeight: "bold" }}>{ctx}</span>;
+                                }
+                                const before = ctx.slice(0, wordIdx);
+                                const after = ctx.slice(wordIdx + occ.word.length);
+                                return (
+                                  <>
+                                    {before && <span style={{ color: "var(--text-1)" }}>{before}</span>}
+                                    <span style={{ color, background: `${color}1A`, border: `0.5px solid ${color}33`, borderRadius: "0.5rem", padding: "2px 10px", fontWeight: "bold", display: "inline-block" }}>{occ.word}</span>
+                                    {after && <span style={{ color: "var(--text-1)" }}>{after}</span>}
+                                  </>
+                                );
+                              })()}
                             </div>
                             {/* Description */}
                             <p className="text-[0.6875rem] sm:text-[0.75rem] leading-relaxed m-0" style={{ color: "var(--text-2)" }}>
