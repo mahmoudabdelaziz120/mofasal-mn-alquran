@@ -570,79 +570,49 @@ export default function SurahReader() {
               {ruleOccurrences.length === 0 ? (
                 <p className="text-[0.6875rem] text-center py-8 font-quran" style={{ color: "var(--text-3)" }}>لا توجد أحكام خاصة</p>
               ) : (
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-[1px]" style={{ background: "var(--glass-thin-border)", borderRadius: "1rem", overflow: "hidden", border: "0.5px solid var(--glass-thin-border)" }}>
                   {ruleOccurrences.map((occ, idx) => {
                     const color = colors[occ.code] || "#888";
                     return (
                       <div
                         key={`${occ.code}-${idx}`}
-                        className="rounded-2xl relative overflow-hidden transition-transform duration-200 hover:scale-[0.98] active:scale-[0.97]"
+                        className="transition-transform duration-200 hover:scale-[0.99] active:scale-[0.98]"
                         style={{
-                          background: "var(--glass-card-bg)",
-                          backdropFilter: "blur(40px)",
-                          WebkitBackdropFilter: "blur(40px)",
-                          border: `0.5px solid ${color}33`,
-                          boxShadow: `0 2px 16px -4px ${color}18, var(--rule-card-shadow, none)`,
-                          animation: `fadeSlideUp 0.3s ease ${idx * 0.05}s both`,
+                          background: "var(--rule-card-bg)",
+                          animation: `fadeSlideUp 0.3s ease ${idx * 0.04}s both`,
                         }}
                       >
-                        {/* Colored top accent line */}
-                        <div className="h-[2px] w-full" style={{ background: `linear-gradient(90deg, transparent 10%, ${color}66 50%, transparent 90%)` }} />
-
-                        <div className="p-3 sm:p-3.5">
-                          {/* Rule header */}
-                          <div className="flex items-center gap-2 mb-2.5">
-                            <div
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{
-                                background: color,
-                                boxShadow: `0 0 6px ${color}66`,
-                              }}
-                            />
-                            <span className="text-[0.75rem] sm:text-[0.8125rem] font-bold" style={{ color }}>
+                        <div className="flex items-start gap-2.5 p-3 sm:p-3.5" dir="rtl">
+                          {/* Colored dot */}
+                          <div
+                            className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
+                            style={{
+                              background: color,
+                              boxShadow: `0 0 6px ${color}66`,
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            {/* Rule name */}
+                            <span className="text-[0.8125rem] sm:text-[0.875rem] font-bold block mb-1.5" style={{ color }}>
                               {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                             </span>
+                            {/* Word in colored badge */}
+                            <div
+                              className="font-quran text-[0.9375rem] sm:text-[1rem] leading-[2] inline-block px-3 py-1 rounded-lg mb-1.5"
+                              style={{
+                                color,
+                                background: `${color}1A`,
+                                border: `0.5px solid ${color}33`,
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {occ.context}
+                            </div>
+                            {/* Description */}
+                            <p className="text-[0.6875rem] sm:text-[0.75rem] leading-relaxed m-0" style={{ color: "var(--text-2)" }}>
+                              {RULE_DESCRIPTIONS[occ.code] || ""}
+                            </p>
                           </div>
-
-                          {/* Context verse snippet */}
-                          <div
-                            className="font-quran text-[0.875rem] sm:text-[0.9375rem] leading-[2.4] text-center py-2.5 px-3 rounded-xl mb-2.5"
-                            style={{
-                              background: isDark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.4)",
-                              border: `0.5px solid ${color}1A`,
-                              color: "var(--quran-text)",
-                            }}
-                          >
-                            {(() => {
-                              const ctx = occ.context;
-                              const wordIdx = ctx.indexOf(occ.word);
-                              if (wordIdx === -1) return <span style={{ color }}>{ctx}</span>;
-                              const before = ctx.slice(0, wordIdx);
-                              const after = ctx.slice(wordIdx + occ.word.length);
-                              return (
-                                <>
-                                  {before && <span style={{ color: "var(--text-2)" }}>{before}</span>}
-                                  <span
-                                    className="px-1 py-0.5 rounded-md mx-0.5"
-                                    style={{
-                                      color,
-                                      fontWeight: "bold",
-                                      background: `${color}14`,
-                                      textShadow: isDark ? `0 0 8px ${color}44` : "none",
-                                    }}
-                                  >
-                                    {occ.word}
-                                  </span>
-                                  {after && <span style={{ color: "var(--text-2)" }}>{after}</span>}
-                                </>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Description */}
-                          <p className="text-[0.625rem] sm:text-[0.6875rem] text-center leading-relaxed" style={{ color: "var(--text-2)" }}>
-                            {RULE_DESCRIPTIONS[occ.code] || ""}
-                          </p>
                         </div>
                       </div>
                     );
