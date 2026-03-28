@@ -508,7 +508,7 @@ export default function SurahReader() {
                 const startX = e.touches[0].clientX;
                 const startW = rulesWidth;
                 const onMove = (ev: TouchEvent) => {
-                  const diff = startX - ev.touches[0].clientX;
+                  const diff = ev.touches[0].clientX - startX;
                   const newW = Math.max(160, Math.min(500, startW + diff));
                   setRulesWidth(newW);
                 };
