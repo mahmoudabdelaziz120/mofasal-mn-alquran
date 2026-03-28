@@ -596,17 +596,24 @@ export default function SurahReader() {
                             <span className="text-[0.8125rem] sm:text-[0.875rem] font-bold block mb-1.5" style={{ color }}>
                               {TAJWEED_RULE_LABELS[occ.code] || occ.code}
                             </span>
-                            {/* Word in colored badge */}
-                            <div
-                              className="font-quran text-[0.9375rem] sm:text-[1rem] leading-[2] inline-block px-3 py-1 rounded-lg mb-1.5"
-                              style={{
-                                color,
-                                background: `${color}1A`,
-                                border: `0.5px solid ${color}33`,
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {occ.context}
+                            {/* Context with highlighted word */}
+                            <div className="font-quran text-[0.9375rem] sm:text-[1rem] leading-[2] mb-1.5" dir="rtl">
+                              {(() => {
+                                const ctx = occ.context;
+                                const wordIdx = ctx.indexOf(occ.word);
+                                if (wordIdx === -1) {
+                                  return <span style={{ color, background: `${color}1A`, border: `0.5px solid ${color}33`, borderRadius: "0.5rem", padding: "2px 10px", fontWeight: "bold" }}>{ctx}</span>;
+                                }
+                                const before = ctx.slice(0, wordIdx);
+                                const after = ctx.slice(wordIdx + occ.word.length);
+                                return (
+                                  <>
+                                    {before && <span style={{ color: "var(--text-1)" }}>{before}</span>}
+                                    <span style={{ color, background: `${color}1A`, border: `0.5px solid ${color}33`, borderRadius: "0.5rem", padding: "2px 10px", fontWeight: "bold", display: "inline-block" }}>{occ.word}</span>
+                                    {after && <span style={{ color: "var(--text-1)" }}>{after}</span>}
+                                  </>
+                                );
+                              })()}
                             </div>
                             {/* Description */}
                             <p className="text-[0.6875rem] sm:text-[0.75rem] leading-relaxed m-0" style={{ color: "var(--text-2)" }}>
