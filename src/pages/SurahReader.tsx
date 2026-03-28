@@ -372,26 +372,22 @@ export default function SurahReader() {
             <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2">
               <div className="flex items-center gap-1.5 flex-1 min-w-0" style={{ color: "var(--text-2)" }}>
                 <span className="text-[0.625rem] sm:text-[0.6875rem]">الآية</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={ayahs.length}
+                <select
                   value={ayahs[curIdx]?.num || 1}
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 1 && val <= ayahs.length) {
-                      const idx = ayahs.findIndex(a => a.num === val);
-                      if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
-                    }
+                    const idx = ayahs.findIndex(a => a.num === val);
+                    if (idx >= 0) loadAyaDirect(idx, isPlaying, reciter);
                   }}
-                  className="w-10 sm:w-12 text-center text-[0.75rem] sm:text-[0.8125rem] font-quran rounded-lg outline-none bg-transparent"
-                  style={{
-                    background: "var(--glass-card-bg)",
-                    border: "0.5px solid var(--glass-card-border)",
-                    color: "var(--text-0)",
-                    padding: "2px 4px",
-                  }}
-                />
+                  className="text-[0.6875rem] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg outline-none cursor-pointer font-quran"
+                  style={{ background: "var(--glass-card-bg)", border: "0.5px solid var(--glass-thin-border)", color: "var(--text-0)" }}
+                >
+                  {ayahs.map((a) => (
+                    <option key={a.num} value={a.num} style={{ background: "var(--select-option-bg)", color: "var(--text-0)" }}>
+                      {numToArabic(a.num)}
+                    </option>
+                  ))}
+                </select>
                 <span className="text-[0.5625rem] sm:text-[0.625rem]">من {numToArabic(ayahs.length)}</span>
               </div>
               <div className="flex items-center gap-1 sm:gap-1.5">
