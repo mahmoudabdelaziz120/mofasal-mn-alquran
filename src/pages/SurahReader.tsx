@@ -496,7 +496,7 @@ export default function SurahReader() {
                 const startX = e.clientX;
                 const startW = rulesWidth;
                 const onMove = (ev: MouseEvent) => {
-                  const diff = startX - ev.clientX;
+                  const diff = ev.clientX - startX;
                   const newW = Math.max(160, Math.min(500, startW + diff));
                   setRulesWidth(newW);
                 };
