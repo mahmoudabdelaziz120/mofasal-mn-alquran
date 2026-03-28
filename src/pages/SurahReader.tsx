@@ -465,15 +465,20 @@ export default function SurahReader() {
                   >
                     {parseTajweedText(aya.text, isDark)}
                     <span
-                      className="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[0.5625rem] sm:text-[0.6875rem] mx-[2px] sm:mx-[3px] align-middle"
+                      className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 mx-[2px] sm:mx-[3px] align-middle"
                       style={{
-                        background: "var(--ayah-num-bg)",
-                        border: "0.5px solid var(--ayah-num-border)",
-                        color: "var(--text-3)",
+                        color: isDark ? "var(--dot-active)" : "#6B4C1E",
                         fontFamily: "system-ui",
+                        fontSize: "0.625rem",
+                        fontWeight: 700,
+                        position: "relative",
                       }}
                     >
-                      {numToArabic(aya.num)}
+                      <svg viewBox="0 0 40 40" className="absolute inset-0 w-full h-full" style={{ color: isDark ? "var(--dot-active)" : "#B8935A" }}>
+                        <path d="M20 2 L26 8 L38 10 L30 18 L32 30 L20 25 L8 30 L10 18 L2 10 L14 8 Z" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.7" />
+                        <circle cx="20" cy="17" r="11" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+                      </svg>
+                      <span className="relative z-10">{numToArabic(aya.num)}</span>
                     </span>
                   </span>
                 ))}
