@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import calligraphyBg from "@/assets/calligraphy-bg.jpg";
+
 
 export default function CosmosBackground() {
   const starsRef = useRef<HTMLDivElement>(null);
@@ -32,76 +32,51 @@ export default function CosmosBackground() {
     }
   }, []);
 
+  if (isLight) {
+    return (
+      <div className="fixed inset-0 z-0" style={{
+        background: "linear-gradient(180deg, #EDE7D9 0%, #E3D9C5 30%, #D4C4A0 60%, #B8A47A 100%)"
+      }}>
+        {/* Golden glow at top center */}
+        <div className="absolute pointer-events-none" style={{
+          width: "80%", height: 350,
+          top: -100, left: "10%",
+          background: "radial-gradient(ellipse at center, rgba(210, 180, 100, 0.22) 0%, transparent 65%)",
+          filter: "blur(80px)",
+        }} />
+        {/* Descending sky shimmer */}
+        <div className="absolute inset-0 pointer-events-none sky-shimmer" style={{
+          background: "linear-gradient(180deg, rgba(220, 195, 130, 0.10) 0%, rgba(200, 170, 100, 0.04) 40%, transparent 70%)",
+        }} />
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-0">
-      {/* Calligraphy background image — always present */}
+    <div className="fixed inset-0 z-0" style={{ background: "var(--cosmos-bg)" }}>
+      <div ref={starsRef} className="absolute inset-0 pointer-events-none" />
       <div
-        className="absolute inset-0 transition-opacity duration-700"
+        className="absolute pointer-events-none"
         style={{
-          backgroundImage: `url(${calligraphyBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          width: 600, height: 350,
+          background: "var(--neb1)",
+          filter: "blur(130px)", opacity: 0.15,
+          top: -100, right: -120,
+          borderRadius: "50%",
+          animation: "drift 22s ease-in-out infinite alternate",
         }}
       />
-
-      {isLight ? (
-        <>
-          {/* Light mode: warm semi-transparent overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(180deg, rgba(235,228,212,0.55) 0%, rgba(227,217,197,0.50) 40%, rgba(217,204,174,0.55) 100%)",
-            }}
-          />
-          {/* Golden glow at top */}
-          <div className="absolute pointer-events-none" style={{
-            width: "80%", height: 350,
-            top: -100, left: "10%",
-            background: "radial-gradient(ellipse at center, rgba(210, 180, 100, 0.18) 0%, transparent 65%)",
-            filter: "blur(80px)",
-          }} />
-          {/* Sky shimmer */}
-          <div className="absolute inset-0 pointer-events-none sky-shimmer" style={{
-            background: "linear-gradient(180deg, rgba(220, 195, 130, 0.08) 0%, rgba(200, 170, 100, 0.03) 40%, transparent 70%)",
-          }} />
-        </>
-      ) : (
-        <>
-          {/* Dark mode: dark overlay with purple tint */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(180deg, rgba(6,13,26,0.88) 0%, rgba(10,22,40,0.85) 30%, rgba(4,8,16,0.90) 70%, rgba(0,0,5,0.92) 100%)",
-            }}
-          />
-          {/* Stars */}
-          <div ref={starsRef} className="absolute inset-0 pointer-events-none" />
-          {/* Nebula glows */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              width: 600, height: 350,
-              background: "var(--neb1)",
-              filter: "blur(130px)", opacity: 0.15,
-              top: -100, right: -120,
-              borderRadius: "50%",
-              animation: "drift 22s ease-in-out infinite alternate",
-            }}
-          />
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              width: 400, height: 400,
-              background: "var(--neb2)",
-              filter: "blur(110px)", opacity: 0.13,
-              bottom: -120, left: -80,
-              borderRadius: "50%",
-              animation: "drift 28s ease-in-out infinite alternate",
-            }}
-          />
-        </>
-      )}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: 400, height: 400,
+          background: "var(--neb2)",
+          filter: "blur(110px)", opacity: 0.13,
+          bottom: -120, left: -80,
+          borderRadius: "50%",
+          animation: "drift 28s ease-in-out infinite alternate",
+        }}
+      />
     </div>
   );
 }
