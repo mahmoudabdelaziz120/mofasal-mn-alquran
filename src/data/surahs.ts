@@ -135,6 +135,8 @@ export const RECITERS = [
   { id: "Yasser_Ad-Dussary_128kbps", name: "ياسر الدوسري" },
   { id: "Ayman_Sowaid_64kbps", name: "أيمن سويد" },
   { id: "Mustafa_Ismail_48kbps", name: "مصطفى إسماعيل" },
+  { id: "Abdurrahmaan_As-Sudais_192kbps", name: "عبد الرحمن السديس" },
+  { id: "Muhammad_Ayyoub_128kbps", name: "محمد أيوب" },
 ];
 
 // Tajweed code-to-color mapping from AlQuran.cloud bracket format
