@@ -474,11 +474,8 @@ export default function SurahReader() {
                         position: "relative",
                       }}
                     >
-                      <svg viewBox="0 0 40 40" className="absolute inset-0 w-full h-full" style={{ color: isDark ? "var(--dot-active)" : "#B8935A" }}>
-                        <path d="M20 2 L26 8 L38 10 L30 18 L32 30 L20 25 L8 30 L10 18 L2 10 L14 8 Z" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.7" />
-                        <circle cx="20" cy="17" r="11" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
-                      </svg>
-                      <span className="relative z-10">{numToArabic(aya.num)}</span>
+                      <span className="relative z-10" style={{ fontSize: "0.6em", fontWeight: 800 }}>{aya.num}</span>
+                      <span className="absolute inset-0 flex items-center justify-center" style={{ fontSize: "1.75em", opacity: 0.85, lineHeight: 1 }}>۝</span>
                     </span>
                   </span>
                 ))}
