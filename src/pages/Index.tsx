@@ -15,6 +15,13 @@ const MAIN_SECTIONS = [
     icon: "📖",
     route: "/tafsir",
   },
+  {
+    id: "tajweed-course",
+    title: "سلسلة التجويد الميسر",
+    desc: "52 درساً شاملاً لتعلّم أحكام التجويد خطوة بخطوة",
+    icon: "🎓",
+    route: "/tajweed-course",
+  },
 ];
 
 // Scroll reveal hook

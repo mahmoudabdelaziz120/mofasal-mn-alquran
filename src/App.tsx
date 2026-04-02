@@ -21,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/surah/:id" element={<SurahReader />} />
           <Route path="/tafsir" element={<TafsirReader />} />
+          <Route path="/tajweed-course" element={<TajweedCourse />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
