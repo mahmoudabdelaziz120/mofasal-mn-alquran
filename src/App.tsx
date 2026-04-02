@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import SurahReader from "./pages/SurahReader.tsx";
 import TafsirReader from "./pages/TafsirReader.tsx";
+import TajweedCourse from "./pages/TajweedCourse.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
