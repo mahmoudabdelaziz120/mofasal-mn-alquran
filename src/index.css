@@ -264,3 +264,8 @@ span.end { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .sky-shimmer { animation: none; }
 }
+
+/* Hide neon glow in light mode */
+[data-theme="light"] .dark-only-glow {
+  display: none;
+}
