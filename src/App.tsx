@@ -7,6 +7,8 @@ import Index from "./pages/Index.tsx";
 import SurahReader from "./pages/SurahReader.tsx";
 import TafsirReader from "./pages/TafsirReader.tsx";
 import TajweedCourse from "./pages/TajweedCourse.tsx";
+import MutashabihatIndex from "./pages/MutashabihatIndex.tsx";
+import MutashabihatSurah from "./pages/MutashabihatSurah.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/surah/:id" element={<SurahReader />} />
           <Route path="/tafsir" element={<TafsirReader />} />
           <Route path="/tajweed-course" element={<TajweedCourse />} />
+          <Route path="/mutashabihat" element={<MutashabihatIndex />} />
+          <Route path="/mutashabihat/:slug" element={<MutashabihatSurah />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

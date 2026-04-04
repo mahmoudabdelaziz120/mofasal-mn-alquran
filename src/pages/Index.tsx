@@ -22,6 +22,13 @@ const MAIN_SECTIONS = [
     icon: "🎓",
     route: "/tajweed-course",
   },
+  {
+    id: "mutashabihat",
+    title: "مُتشابِهاتُ القُرآنِ الكريم",
+    desc: "تصفَّح الآياتِ المُتشابِهةَ لفظًا مُرتَّبةً حسبَ السُّوَر",
+    icon: "🔗",
+    route: "/mutashabihat",
+  },
 ];
 
 // Scroll reveal hook
