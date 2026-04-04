@@ -110,27 +110,26 @@ export default function Index() {
 
         {/* Search */}
         <div ref={searchRef} className="px-4 max-w-2xl mx-auto w-full mb-6 sm:mb-8">
-          {/* Neon glow search bar */}
           <div className="relative">
-            {/* Neon glow layer behind */}
+            {/* Neon glow - dark mode only */}
             <div
-              className="absolute -inset-[3px] rounded-[28px] opacity-70 blur-md pointer-events-none"
+              className="absolute -inset-[3px] rounded-[28px] opacity-70 blur-md pointer-events-none dark-only-glow"
               style={{
                 background: "linear-gradient(90deg, #c026d3, #7c3aed, #201E4B)",
               }}
             />
             <div
-              className="absolute -inset-[1.5px] rounded-[26px] opacity-90 pointer-events-none"
+              className="absolute -inset-[1.5px] rounded-[26px] opacity-90 pointer-events-none dark-only-glow"
               style={{
                 background: "linear-gradient(90deg, #c026d3, #7c3aed, #201E4B)",
               }}
             />
             {/* Main bar */}
             <div
-              className="relative flex items-center gap-3 pl-3 pr-1.5 py-1.5 rounded-3xl"
+              className="relative flex items-center gap-3 px-4 py-3 rounded-3xl"
               style={{
                 background: "hsl(var(--card))",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid var(--glass-card-border)",
               }}
             >
               <Search className="w-5 h-5 flex-shrink-0" style={{ color: "var(--text-2)" }} />
@@ -139,22 +138,9 @@ export default function Index() {
                 placeholder="ابحث عن سورة بالاسم أو الرقم..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm sm:text-base font-quran placeholder:text-[var(--text-3)] py-2"
+                className="flex-1 bg-transparent outline-none text-base sm:text-lg font-bold font-quran placeholder:font-normal placeholder:text-[var(--text-2)]"
                 style={{ color: "var(--text-0)" }}
               />
-              {/* Filter button */}
-              <button
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-                title="فلتر"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-1)" }}>
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                </svg>
-              </button>
             </div>
           </div>
         </div>
