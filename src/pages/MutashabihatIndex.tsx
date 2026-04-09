@@ -97,40 +97,27 @@ export default function MutashabihatIndex() {
               <button
                 key={surah.id}
                 onClick={() => navigate(`/mutashabihat/${SURAH_SLUGS[surah.id]}`)}
-                className="group glass-card-themed rounded-2xl p-4 text-right transition-all duration-200 hover:scale-[1.02]"
+                className="group mutashabihat-card rounded-2xl p-4 text-right transition-all duration-200 hover:scale-[1.02]"
               >
                 {/* Header row */}
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-bold"
-                    style={{ background: "var(--highlight-bg)", color: "var(--dot-active)" }}
-                  >
+                  <span className="mutashabihat-num w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold">
                     {surah.id}
                   </span>
-                  <svg
-                    className="w-4 h-4 opacity-30 group-hover:opacity-70 transition-opacity rtl:rotate-180"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    style={{ color: "var(--text-2)" }}
-                  >
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M14.78 14.78a.75.75 0 0 1-1.06 0L6.5 7.56v5.69a.75.75 0 0 1-1.5 0v-7.5A.75.75 0 0 1 5.75 5h7.5a.75.75 0 0 1 0 1.5H7.56l7.22 7.22a.75.75 0 0 1 0 1.06Z"
-                    />
-                  </svg>
+                  <div className="flex gap-1">
+                    <span className="w-[6px] h-[6px] rounded-full" style={{ background: "#2E8B57" }} />
+                    <span className="w-[6px] h-[6px] rounded-full" style={{ background: "#1B8A8A" }} />
+                    <span className="w-[6px] h-[6px] rounded-full" style={{ background: "#7B52B9" }} />
+                  </div>
                 </div>
 
                 {/* Surah name */}
-                <div
-                  className="font-quran text-lg font-bold mb-1 group-hover:text-[var(--dot-active)] transition-colors"
-                  style={{ color: "var(--text-0)" }}
-                >
+                <div className="font-quran text-lg font-bold mb-1 mutashabihat-name transition-colors" >
                   {surah.name}
                 </div>
 
                 {/* Verse count */}
-                <div className="text-xs" style={{ color: "var(--text-2)" }}>
+                <div className="text-sm font-semibold mutashabihat-sub">
                   {surah.versesCount} {getAyahLabel(surah.versesCount)}
                 </div>
               </button>
