@@ -442,8 +442,10 @@ export default function SurahReader() {
                   <SkipBack className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
                 <button
-                  onClick={() => setShowRepeatDialog(true)}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
+                  onClick={() => !wholeSurah && setShowRepeatDialog(true)}
+                  disabled={wholeSurah}
+                  title={wholeSurah ? "غير متاح في وضع السورة الكاملة" : "تكرار"}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     background: repeatConfigRef.current ? "var(--highlight-bg)" : "var(--glass-card-bg)",
                     border: `0.5px solid ${repeatConfigRef.current ? "var(--highlight-border)" : "var(--glass-card-border)"}`,
@@ -452,6 +454,7 @@ export default function SurahReader() {
                 >
                   <Repeat className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
+
               </div>
             </div>
             {/* Progress */}
