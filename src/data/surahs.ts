@@ -123,7 +123,18 @@ export const SURAHS: SurahInfo[] = [
   { id: 114, name: "الناس", englishName: "An-Nas", versesCount: 6, revelationPlace: "makkah" },
 ];
 
-export const RECITERS = [
+export interface ReciterInfo {
+  id: string;
+  name: string;
+  /**
+   * If set, this reciter is only available as full-surah recordings.
+   * The URL is built as `${wholeSurahBase}${001..114}.mp3`.
+   * Per-ayah controls (next/prev/repeat dialog) will be disabled.
+   */
+  wholeSurahBase?: string;
+}
+
+export const RECITERS: ReciterInfo[] = [
   { id: "Muhammad_Jibreel_128kbps", name: "محمد جبريل" },
   { id: "Alafasy_128kbps", name: "مشاري العفاسي — مرتل" },
   { id: "Abdul_Basit_Murattal_192kbps", name: "عبد الباسط — مرتل" },
@@ -137,10 +148,22 @@ export const RECITERS = [
   { id: "Mustafa_Ismail_48kbps", name: "مصطفى إسماعيل" },
   { id: "Abdurrahmaan_As-Sudais_192kbps", name: "عبد الرحمن السديس" },
   { id: "Muhammad_Ayyoub_128kbps", name: "محمد أيوب" },
-  { id: "Khalid_Abdullah_Al-Jaleel_192kbps", name: "خالد الجليل" },
+  { id: "Khalid_Al-Jaleel_FullSurah", name: "خالد الجليل — سورة كاملة", wholeSurahBase: "https://server10.mp3quran.net/jleel/" },
   { id: "Husary_128kbps", name: "محمود خليل الحصري — مرتل" },
   { id: "Husary_Mujawwad_64kbps", name: "محمود خليل الحصري — مجوّد" },
 ];
+
+export function isWholeSurahReciter(reciterId: string): boolean {
+  return !!RECITERS.find((r) => r.id === reciterId)?.wholeSurahBase;
+}
+
+export function surahAudioUrl(surahNum: number, reciterId: string): string | null {
+  const r = RECITERS.find((x) => x.id === reciterId);
+  if (!r?.wholeSurahBase) return null;
+  const s = String(surahNum).padStart(3, "0");
+  return `${r.wholeSurahBase}${s}.mp3`;
+}
+
 
 // Tajweed code-to-color mapping from AlQuran.cloud bracket format
 // Dark mode colors
