@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl } from "@/data/surahs";
+import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl, isWholeSurahReciter, surahAudioUrl } from "@/data/surahs";
 import { parseTajweedText, extractTajweedOccurrences } from "@/lib/tajweedParser";
 import CosmosBackground from "@/components/CosmosBackground";
 import ThemeToggle from "@/components/ThemeToggle";
