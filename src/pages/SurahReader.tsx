@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl } from "@/data/surahs";
+import { SURAHS, RECITERS, TAJWEED_COLORS_DARK, TAJWEED_COLORS_LIGHT, TAJWEED_RULE_LABELS, numToArabic, ayaUrl, isWholeSurahReciter, surahAudioUrl } from "@/data/surahs";
 import { parseTajweedText, extractTajweedOccurrences } from "@/lib/tajweedParser";
 import CosmosBackground from "@/components/CosmosBackground";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -114,6 +114,8 @@ export default function SurahReader() {
     return () => ctrl.abort();
   }, [surahNum]);
 
+  const wholeSurah = isWholeSurahReciter(reciter);
+
   // Audio setup
   useEffect(() => {
     if (!audioRef.current) audioRef.current = new Audio();
@@ -126,6 +128,15 @@ export default function SurahReader() {
     };
     const onDurationChange = () => setDurTime(fmt(audio.duration));
     const onEnded = () => {
+      if (wholeSurah) {
+        if (repeatMode) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          setIsPlaying(false);
+        }
+        return;
+      }
       const cfg = repeatConfigRef.current;
       if (cfg) {
         // Repeat loop mode
@@ -174,22 +185,38 @@ export default function SurahReader() {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
     };
-  }, [curIdx, ayahs.length, repeatMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [curIdx, ayahs.length, repeatMode, wholeSurah]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } };
   }, []);
 
-  // Auto-reload audio when reciter or ayah changes
+  // Auto-reload audio when reciter changes (and on first ayah load)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || ayahs.length === 0) return;
     const wasPlaying = isPlayingRef.current;
+    if (wholeSurah) {
+      const newSrc = surahAudioUrl(surahNum, reciter) || "";
+      if (audio.src !== newSrc) {
+        clearTimeout(timeoutRef.current!);
+        setProgress(0);
+        setCurTime("0:00");
+        setDurTime("0:00");
+        audio.src = newSrc;
+        audio.load();
+        if (wasPlaying) {
+          audio.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      }
+      return;
+    }
     const newSrc = ayaUrl(surahNum, ayahs[curIdx]?.num || 1, reciter);
     if (audio.src !== newSrc) {
       loadAyaDirect(curIdx, wasPlaying, reciter);
     }
-  }, [reciter, curIdx]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reciter, curIdx, wholeSurah]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fmt = (s: number) => {
     if (!s || isNaN(s)) return "0:00";
@@ -203,6 +230,19 @@ export default function SurahReader() {
     if (!audio || !ayahs[idx]) return;
     clearTimeout(timeoutRef.current!);
     setCurIdx(idx);
+    // Whole-surah mode: just change highlight; audio src already loaded for the full surah
+    if (isWholeSurahReciter(rec)) {
+      const fullSrc = surahAudioUrl(surahNum, rec) || "";
+      if (audio.src !== fullSrc) {
+        audio.src = fullSrc;
+        audio.load();
+      }
+      if (autoPlay) {
+        audio.play().catch(() => {});
+        setIsPlaying(true);
+      }
+      return;
+    }
     setProgress(0);
     setCurTime("0:00");
     setDurTime("0:00");
@@ -216,6 +256,7 @@ export default function SurahReader() {
       }, 6000);
     }
   };
+
 
   const loadAya = useCallback(
     (idx: number, autoPlay = false) => { loadAyaDirect(idx, autoPlay, reciter); },
@@ -401,8 +442,10 @@ export default function SurahReader() {
                   <SkipBack className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
                 <button
-                  onClick={() => setShowRepeatDialog(true)}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"
+                  onClick={() => !wholeSurah && setShowRepeatDialog(true)}
+                  disabled={wholeSurah}
+                  title={wholeSurah ? "غير متاح في وضع السورة الكاملة" : "تكرار"}
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     background: repeatConfigRef.current ? "var(--highlight-bg)" : "var(--glass-card-bg)",
                     border: `0.5px solid ${repeatConfigRef.current ? "var(--highlight-border)" : "var(--glass-card-border)"}`,
@@ -411,6 +454,7 @@ export default function SurahReader() {
                 >
                   <Repeat className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </button>
+
               </div>
             </div>
             {/* Progress */}
